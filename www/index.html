@@ -903,7 +903,28 @@ Rules: amounts are plain numbers ("25k" = 25000, "2 million" = 2000000). Resolve
     msg.textContent = (reason || "Voice isn't available here.") + " Tap the box and use the mic on your phone's keyboard instead.";
     $("quick").focus();
   }
+  async function nativeListen() {
+    const C = window.Capacitor, msg = $("quickMsg");
+    try {
+      const av = await C.nativePromise("SpeechRecognition", "available", {});
+      if (!av || !av.available) return micFallback("Speech recognition isn't available on this phone.");
+      let perm = await C.nativePromise("SpeechRecognition", "checkPermissions", {});
+      if (perm.speechRecognition !== "granted") perm = await C.nativePromise("SpeechRecognition", "requestPermissions", {});
+      if (perm.speechRecognition !== "granted") return micFallback("The microphone is blocked. Allow it for Pocket Ledger in your phone settings, or");
+      $("mic").classList.add("on"); msg.className = "small"; msg.textContent = "Listening…";
+      const res = await C.nativePromise("SpeechRecognition", "start", { language: navigator.language || "en-US", maxResults: 1, prompt: "Say what you spent or earned", popup: true, partialResults: false });
+      $("mic").classList.remove("on");
+      const said = res && res.matches && res.matches[0];
+      if (said) { $("quick").value = said; quickAdd(said); }
+      else { msg.className = "small"; msg.textContent = "I didn't hear anything. Tap the mic and try again."; }
+    } catch (e) {
+      $("mic").classList.remove("on");
+      msg.className = "small"; msg.textContent = "I didn't catch that. Tap the mic and try again.";
+    }
+  }
   $("mic").onclick = () => {
+    const C = window.Capacitor;
+    if (C && C.isNativePlatform && C.isNativePlatform() && (C.PluginHeaders || []).some(h => h.name === "SpeechRecognition")) return nativeListen();
     if (!SR) return micFallback();
     if (listening && rec) { rec.stop(); return; }
     try {
