@@ -155,8 +155,8 @@ svg text { fill: var(--muted); font-family: var(--mono); font-size: 10px; }
     <div class="stat"><span class="label">Income</span><span class="num in" id="sIn"></span></div>
     <div class="stat"><span class="label">Spent</span><span class="num out" id="sOut"></span></div>
     <div class="stat"><span class="label">Left over</span><span class="num" id="sNet"></span></div>
-    <div class="stat"><span class="label">Budget used</span><span class="num" id="sBud"></span>
-      <div class="meter"><i id="sBudBar"></i></div><span class="small" id="sBudNote"></span></div>
+    <div class="stat"><span class="label">Saved</span><span class="num" id="sSave" style="color:var(--c9)"></span>
+      <div class="meter"><i id="sSaveBar" style="background:var(--c9)"></i></div><span class="small" id="sSaveNote"></span></div>
   </section>
 
   <div class="cols">
@@ -315,18 +315,20 @@ svg text { fill: var(--muted); font-family: var(--mono); font-size: 10px; }
     const m = inMonth(key);
     const inc = sum(m.filter(t => t.type === "income"));
     const exp = sum(m.filter(t => t.type === "expense"));
+    const saved = sum(m.filter(t => t.type === "expense" && t.cat === "savings"));
     $("sIn").textContent = money(inc);
-    $("sOut").textContent = money(exp);
+    $("sOut").textContent = money(exp - saved);
     $("sNet").textContent = money(inc - exp);
     $("sNet").className = "num " + (inc - exp >= 0 ? "in" : "out");
-    const pct = state.budget > 0 ? exp / state.budget : 0;
-    $("sBud").textContent = state.budget > 0 ? Math.round(pct * 100) + "%" : "No budget";
-    const bar = $("sBudBar");
+    const goal = state.catBudgets.savings || 0;
+    const pct = goal > 0 ? saved / goal : 0;
+    $("sSave").textContent = money(saved);
+    const bar = $("sSaveBar");
+    bar.parentElement.hidden = !goal;
     bar.style.width = Math.min(100, pct * 100) + "%";
-    bar.className = pct > 1 ? "over" : pct > 0.85 ? "near" : "";
-    $("sBudNote").textContent = state.budget > 0
-      ? (exp <= state.budget ? money(state.budget - exp) + " left of " + money(state.budget, { round: true }) : money(exp - state.budget) + " over budget")
-      : "Set one in Monthly budget";
+    $("sSaveNote").textContent = goal > 0
+      ? (saved >= goal ? "Goal reached: " + money(goal, { round: true }) : Math.round(pct * 100) + "% of your " + money(goal, { round: true }) + " goal")
+      : (inc > 0 ? Math.round(saved / inc * 100) + "% of your income" : "Set a goal next to Savings below");
 
     // entries
     const sorted = [...m].sort((a, b) => b.date.localeCompare(a.date));
