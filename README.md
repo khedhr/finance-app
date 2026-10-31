@@ -4,7 +4,7 @@ A simple personal finance app that runs in your browser.
 
 - Log expenses and income with a category, date and note
 - Add by voice or a quick sentence: "spent 25 on groceries yesterday"
-- Smart voice: paste your own Claude key and Claude understands any sentence, in any language, with several entries at once
+- Smart voice: paste a free Google Gemini key or a Claude key and the AI understands any sentence, in any language, with several entries at once
 - See income, spending and what's left for each month
 - Charts: spending by category and the last 6 months of income vs spending
 - Edit or delete any entry
