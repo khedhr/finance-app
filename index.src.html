@@ -15,7 +15,7 @@
   --income: #1f7a4d;
   --expense: #b2452f;
   --warn: #b7791f;
-  --c1: #0f6b5c; --c2: #d08a2e; --c3: #5872c4; --c4: #b2452f; --c5: #8a5aa8; --c6: #3e9bb3; --c7: #7a8a3a; --c8: #a0627a; --c9: #2f8f6f; --c10: #6b6f86;
+  --c1: #0f6b5c; --c2: #d08a2e; --c3: #5872c4; --c4: #b2452f; --c5: #8a5aa8; --c6: #3e9bb3; --c7: #7a8a3a; --c8: #a0627a; --c9: #2f8f6f; --c10: #6b6f86; --c11: #c06c1f; --c12: #2d7fb8; --c13: #9c4f96; --c14: #4f8a35;
   --side: #f7f7f6; --side-fg: #1a1c1b; --side-muted: #6b706e; --side-hover: rgba(0,0,0,.045); --side-active: #ebeceb; --field: #f6f7f6; --surface-dim: rgba(255,255,255,.35);
   --display: "Bricolage Grotesque", "Segoe UI", system-ui, sans-serif;
   --body: "Public Sans", "Segoe UI", system-ui, sans-serif;
@@ -24,13 +24,13 @@
 @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
   --bg: #1c1d1d; --surface: #262827; --fg: #ececea; --muted: #a2a6a4; --line: #353837; --field: #2d302f;
   --accent: #4fc3a8; --accent-soft: #1f3a33; --income: #5fcf91; --expense: #f0876f; --warn: #e8b45a;
-  --c1: #4fc3a8; --c2: #e8a94f; --c3: #8ea3ec; --c4: #f0876f; --c5: #c39ae0; --c6: #6cc6dd; --c7: #b5c46a; --c8: #e09ab4; --c9: #7fd6b0; --c10: #b3b7cf;
+  --c1: #4fc3a8; --c2: #e8a94f; --c3: #8ea3ec; --c4: #f0876f; --c5: #c39ae0; --c6: #6cc6dd; --c7: #b5c46a; --c8: #e09ab4; --c9: #7fd6b0; --c10: #b3b7cf; --c11: #f0a35e; --c12: #7fb8e6; --c13: #d79ad2; --c14: #9fd27a;
   --side: #141515; --side-fg: #ececea; --side-muted: #a2a6a4; --side-hover: rgba(255,255,255,.06); --side-active: #2a2c2b;
   color-scheme: dark; } }
 :root[data-theme="dark"] {
   --bg: #1c1d1d; --surface: #262827; --fg: #ececea; --muted: #a2a6a4; --line: #353837; --field: #2d302f;
   --accent: #4fc3a8; --accent-soft: #1f3a33; --income: #5fcf91; --expense: #f0876f; --warn: #e8b45a;
-  --c1: #4fc3a8; --c2: #e8a94f; --c3: #8ea3ec; --c4: #f0876f; --c5: #c39ae0; --c6: #6cc6dd; --c7: #b5c46a; --c8: #e09ab4; --c9: #7fd6b0; --c10: #b3b7cf;
+  --c1: #4fc3a8; --c2: #e8a94f; --c3: #8ea3ec; --c4: #f0876f; --c5: #c39ae0; --c6: #6cc6dd; --c7: #b5c46a; --c8: #e09ab4; --c9: #7fd6b0; --c10: #b3b7cf; --c11: #f0a35e; --c12: #7fb8e6; --c13: #d79ad2; --c14: #9fd27a;
   --side: #141515; --side-fg: #ececea; --side-muted: #a2a6a4; --side-hover: rgba(255,255,255,.06); --side-active: #2a2c2b;
   color-scheme: dark;
 }
@@ -198,6 +198,14 @@ form.add input, form.add select { width: 100%; border: 1px solid var(--line); ba
 .list li { display: grid; grid-template-columns: 10px minmax(0, 1fr) auto auto auto; gap: 12px; align-items: center; padding: 10px 2px; border-top: 1px solid var(--line); }
 .list li:first-child { border-top: 0; }
 .dot { width: 10px; height: 10px; border-radius: 50%; }
+.catlist { list-style: none; margin: 12px 0; padding: 0; display: grid; gap: 6px; }
+.catlist li { display: flex; align-items: center; gap: 8px; }
+.catlist .sw { width: 28px; height: 28px; border-radius: 50%; border: 2px solid var(--surface); box-shadow: 0 0 0 1px var(--line); flex: none; padding: 0; }
+.catlist input, .catadd input { flex: 1; min-width: 0; border: 1px solid var(--line); background: var(--field); color: var(--fg); border-radius: 8px; padding: 7px 10px; font: inherit; }
+.catlist .del { border: 0; background: transparent; color: var(--muted); font-size: 1.1rem; width: 32px; height: 32px; border-radius: 8px; flex: none; }
+.catlist .del:hover { background: var(--side-hover); color: var(--expense); }
+.catlist .del[disabled] { visibility: hidden; }
+.catadd { display: flex; gap: 8px; }
 .what { min-width: 0; }
 .what b { font-weight: 600; display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .what span { font-size: 0.8rem; color: var(--muted); }
@@ -388,6 +396,21 @@ svg text { fill: var(--muted); font-family: var(--mono); font-size: 10px; }
       </section>
 
       <section class="panel">
+        <div class="panel-head"><h2>Categories</h2></div>
+        <p class="small" style="margin:0 0 10px">Rename any category, tap the dot to change its color, or add your own.</p>
+        <div class="seg" role="group" aria-label="Category type" id="catSeg">
+          <button type="button" class="e" data-ct="expense" aria-pressed="true">Spending</button>
+          <button type="button" class="i" data-ct="income" aria-pressed="false">Income</button>
+        </div>
+        <ul class="catlist" id="catList"></ul>
+        <form class="catadd" id="catAdd">
+          <input id="catNew" maxlength="30" placeholder="New category, e.g. Kids" aria-label="New category name">
+          <button class="primary" type="submit" style="width:auto">Add</button>
+        </form>
+        <p class="small" id="catMsg" role="status" style="margin:6px 0 0"></p>
+      </section>
+
+      <section class="panel">
         <div class="panel-head"><h2>Currency</h2></div>
         <select id="currency" aria-label="Currency" style="width:fit-content">
           <option value="USD">$ US dollar</option><option value="IQD">IQD Iraqi dinar</option>
@@ -460,7 +483,7 @@ svg text { fill: var(--muted); font-family: var(--mono); font-size: 10px; }
     applyTheme();
   });
   try { matchMedia("(prefers-color-scheme: dark)").addEventListener("change", () => { if (themePref === "auto") applyTheme(); }); } catch (e) {}
-  const EXP_CATS = [
+  const BASE_EXP = [
     { id: "housing", name: "Housing", color: "--c1" },
     { id: "groceries", name: "Groceries", color: "--c2" },
     { id: "transport", name: "Transport", color: "--c3" },
@@ -472,7 +495,7 @@ svg text { fill: var(--muted); font-family: var(--mono); font-size: 10px; }
     { id: "debt", name: "Debt payments", color: "--c10" },
     { id: "other", name: "Other", color: "--c8" },
   ];
-  const INC_CATS = [
+  const BASE_INC = [
     { id: "salary", name: "Salary" }, { id: "freelance", name: "Side income" },
     { id: "gift", name: "Gifts" }, { id: "repaid", name: "Debt repaid to me" }, { id: "other-in", name: "Other income" },
   ];
@@ -519,6 +542,19 @@ svg text { fill: var(--muted); font-family: var(--mono); font-size: 10px; }
   if (state.currency !== "USD" && state.currency !== "IQD") state.currency = "USD";
   if (!Array.isArray(state.goals)) state.goals = [];
   const save = () => { try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) {} };
+  // ---- categories (built-in + your own) ----
+  const PALETTE = ["--c1", "--c2", "--c3", "--c4", "--c5", "--c6", "--c7", "--c8", "--c9", "--c10", "--c11", "--c12", "--c13", "--c14"];
+  const LOCKED = ["savings", "debt", "other", "repaid", "other-in"];
+  let EXP_CATS = [], INC_CATS = [];
+  function buildCats() {
+    if (!state.catEdits || typeof state.catEdits !== "object") state.catEdits = {};
+    if (!Array.isArray(state.customCats)) state.customCats = [];
+    const mk = (c, custom) => ({ ...c, ...(state.catEdits[c.id] || {}), custom: !!custom });
+    const exp = BASE_EXP.map(c => mk(c)), inc = BASE_INC.map(c => mk(c));
+    for (const c of state.customCats) (c.type === "income" ? inc : exp).splice(-1, 0, mk(c, true));
+    EXP_CATS = exp; INC_CATS = inc;
+  }
+  buildCats();
 
   let view = new Date(); view.setDate(1);
   let type = "expense";
@@ -539,7 +575,7 @@ svg text { fill: var(--muted); font-family: var(--mono); font-size: 10px; }
 
   function fillCats() {
     const list = type === "expense" ? EXP_CATS : INC_CATS;
-    $("cat").innerHTML = list.map(c => `<option value="${c.id}">${c.name}</option>`).join("");
+    $("cat").innerHTML = list.map(c => `<option value="${c.id}">${esc(c.name)}</option>`).join("");
   }
   function setType(t) {
     type = t;
@@ -575,7 +611,7 @@ svg text { fill: var(--muted); font-family: var(--mono); font-size: 10px; }
     // entries
     const cats = fType === "income" ? INC_CATS : fType === "expense" ? EXP_CATS : [...EXP_CATS, ...INC_CATS];
     if (fCat && !cats.some(c => c.id === fCat)) fCat = "";
-    $("fCat").innerHTML = `<option value="">All categories</option>` + cats.map(c => `<option value="${c.id}">${c.name}</option>`).join("");
+    $("fCat").innerHTML = `<option value="">All categories</option>` + cats.map(c => `<option value="${c.id}">${esc(c.name)}</option>`).join("");
     $("fCat").value = fCat;
     const filtered = fType !== "all" || fCat;
     const base = m.filter(t => (fType === "all" || t.type === fType) && (!fCat || t.cat === fCat));
@@ -604,7 +640,7 @@ svg text { fill: var(--muted); font-family: var(--mono); font-size: 10px; }
     });
     parts += `<text x="80" y="76" text-anchor="middle" style="font-size:9px">SPENT</text><text x="80" y="94" text-anchor="middle" style="font-size:13px;fill:var(--fg)">${money(exp, { round: true })}</text>`;
     svg.innerHTML = parts;
-    $("legend").innerHTML = byCat.length ? byCat.map(c => `<li><span class="dot" style="background:var(${c.color})"></span><span>${c.name}</span><span class="num">${Math.round(c.total / exp * 100)}%</span></li>`).join("") : `<li class="small" style="display:block">No spending this month.</li>`;
+    $("legend").innerHTML = byCat.length ? byCat.map(c => `<li><span class="dot" style="background:var(${c.color})"></span><span>${esc(c.name)}</span><span class="num">${Math.round(c.total / exp * 100)}%</span></li>`).join("") : `<li class="small" style="display:block">No spending this month.</li>`;
 
     drawBars();
     renderDebts();
@@ -691,6 +727,53 @@ svg text { fill: var(--muted); font-family: var(--mono); font-size: 10px; }
   }
   $("cancelEdit").onclick = () => { stopEdit(); $("amt").value = ""; $("note").value = ""; $("date").value = todayStr(); render(); };
 
+  // ---- categories editor ----
+  let catType = "expense";
+  const catMsg = (t, k) => { $("catMsg").textContent = t; $("catMsg").className = "small " + (k || ""); };
+  function drawCats() {
+    document.querySelectorAll("[data-ct]").forEach(b => b.setAttribute("aria-pressed", b.dataset.ct === catType));
+    const list = catType === "income" ? INC_CATS : EXP_CATS;
+    $("catList").innerHTML = list.map(c => `<li data-id="${esc(c.id)}">${catType === "expense" ? `<button type="button" class="sw" style="background:var(${c.color || "--c8"})" aria-label="Change color of ${esc(c.name)}"></button>` : `<span class="dot" style="background:var(--income);width:12px;height:12px;margin:0 8px"></span>`}<input value="${esc(c.name)}" maxlength="30" aria-label="Name"><button type="button" class="del" aria-label="Delete ${esc(c.name)}" ${c.custom ? "" : "disabled"}>×</button></li>`).join("");
+  }
+  function editCat(id, patch) {
+    const own = state.customCats.find(c => c.id === id);
+    if (own) Object.assign(own, patch); else state.catEdits[id] = { ...(state.catEdits[id] || {}), ...patch };
+    buildCats(); save(); refreshCats();
+  }
+  function refreshCats() { const v = $("cat").value; fillCats(); if ([...$("cat").options].some(o => o.value === v)) $("cat").value = v; render(); }
+  $("catSeg").onclick = e => { const b = e.target.closest("[data-ct]"); if (b) { catType = b.dataset.ct; catMsg(""); drawCats(); } };
+  $("catList").onclick = e => {
+    const li = e.target.closest("li"); if (!li) return; const id = li.dataset.id;
+    if (e.target.closest(".sw")) {
+      const c = catOf(id), i = PALETTE.indexOf(c.color);
+      editCat(id, { color: PALETTE[(i + 1) % PALETTE.length] }); drawCats();
+    } else if (e.target.closest(".del")) {
+      const c = catOf(id), other = catType === "income" ? "other-in" : "other";
+      const n = state.tx.filter(t => t.cat === id).length;
+      state.tx.forEach(t => { if (t.cat === id) t.cat = other; });
+      state.customCats = state.customCats.filter(x => x.id !== id);
+      buildCats(); save(); refreshCats(); drawCats();
+      catMsg("Deleted " + c.name + "." + (n ? " Its " + n + " entr" + (n === 1 ? "y" : "ies") + " moved to " + catOf(other).name + "." : ""), "ok");
+    }
+  };
+  $("catList").addEventListener("change", e => {
+    const li = e.target.closest("li"); if (!li || e.target.tagName !== "INPUT") return;
+    const name = e.target.value.trim().slice(0, 30);
+    if (!name) { e.target.value = catOf(li.dataset.id).name; return; }
+    editCat(li.dataset.id, { name }); catMsg("Saved.", "ok");
+  });
+  $("catAdd").onsubmit = e => {
+    e.preventDefault();
+    const name = $("catNew").value.trim().slice(0, 30); if (!name) return;
+    const list = catType === "income" ? INC_CATS : EXP_CATS;
+    if (list.some(c => c.name.toLowerCase() === name.toLowerCase())) return catMsg("You already have " + name + ".", "bad");
+    const used = EXP_CATS.map(c => c.color), color = PALETTE.find(p => !used.includes(p)) || PALETTE[state.customCats.length % PALETTE.length];
+    state.customCats.push({ id: "my-" + uid(), type: catType, name, color });
+    buildCats(); save(); refreshCats(); drawCats(); $("catNew").value = "";
+    catMsg("Added " + name + ".", "ok");
+  };
+  drawCats();
+
   // ---- backup & restore ----
   const dataMsg = (text, kind) => { $("dataMsg").textContent = text; $("dataMsg").className = "small " + (kind || ""); };
   $("backupBtn").onclick = async () => {
@@ -755,7 +838,7 @@ svg text { fill: var(--muted); font-family: var(--mono); font-size: 10px; }
       const d = JSON.parse(await f.text());
       if (!d || !Array.isArray(d.tx)) throw new Error("bad");
       const tx = d.tx.filter(t => t && t.id && (t.type === "income" || t.type === "expense") && typeof t.amount === "number" && /^\d{4}-\d{2}-\d{2}$/.test(t.date));
-      pending = { tx, goals: Array.isArray(d.goals) ? d.goals.filter(g => g && g.id && g.name && typeof g.target === "number") : [], debts: Array.isArray(d.debts) ? d.debts.filter(x => x && x.id && x.who && typeof x.amount === "number") : [], currency: d.currency === "IQD" || d.currency === "USD" ? d.currency : state.currency, budget: Number(d.budget) || 0, catBudgets: d.catBudgets && typeof d.catBudgets === "object" ? d.catBudgets : {} };
+      pending = { tx, goals: Array.isArray(d.goals) ? d.goals.filter(g => g && g.id && g.name && typeof g.target === "number") : [], debts: Array.isArray(d.debts) ? d.debts.filter(x => x && x.id && x.who && typeof x.amount === "number") : [], currency: d.currency === "IQD" || d.currency === "USD" ? d.currency : state.currency, catEdits: d.catEdits && typeof d.catEdits === "object" ? d.catEdits : {}, customCats: Array.isArray(d.customCats) ? d.customCats.filter(c => c && c.id && c.name) : [], budget: Number(d.budget) || 0, catBudgets: d.catBudgets && typeof d.catBudgets === "object" ? d.catBudgets : {} };
       const when = d.savedAt ? " from " + new Date(d.savedAt).toLocaleDateString() : "";
       $("restoreText").textContent = "This backup" + when + " has " + tx.length + " entries. It will replace everything in the app now.";
       $("restoreConfirm").hidden = false; dataMsg("");
@@ -764,7 +847,7 @@ svg text { fill: var(--muted); font-family: var(--mono); font-size: 10px; }
   $("restoreNo").onclick = () => { pending = null; $("restoreConfirm").hidden = true; };
   $("restoreYes").onclick = () => {
     if (!pending) return;
-    state = pending; pending = null; save(); stopEdit();
+    state = pending; pending = null; buildCats(); fillCats(); drawCats(); save(); stopEdit();
     $("restoreConfirm").hidden = true;
     view = new Date(); view.setDate(1); render();
     dataMsg("Restored " + state.tx.length + " entries.", "ok");
@@ -872,8 +955,9 @@ svg text { fill: var(--muted); font-family: var(--mono); font-size: 10px; }
     const spendWords = /\b(spent|spend|paid for|paid|bought|buy|cost|for)\b/;
     let t = INCOME_WORDS.some(w => s.includes(w)) && !/\b(spent|bought|paid for)\b/.test(s) ? "income" : "expense";
     if (t === "income" && /\bgot\b/.test(s) && !/\b(salary|paid|bonus|refund|income|money)\b/.test(s) && spendWords.test(s)) t = "expense";
+    const own = (t === "income" ? INC_CATS : EXP_CATS).find(c => s.includes(" " + c.name.toLowerCase()));
     const pool = t === "income" ? ["salary", "freelance", "gift"] : EXP_CATS.map(c => c.id);
-    let cat = pool.find(id => (KW[id] || []).some(k => s.includes(k))) || (t === "income" ? "other-in" : "other");
+    let cat = (own && own.id) || pool.find(id => (KW[id] || []).some(k => s.includes(k))) || (t === "income" ? "other-in" : "other");
     if (t === "expense" && cat === "other" && /\bgift\b/.test(s)) cat = "fun";
     const d = new Date();
     if (/\byesterday\b/.test(s)) d.setDate(d.getDate() - 1);
