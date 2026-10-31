@@ -20,7 +20,7 @@
   --income: #1f7a4d;
   --expense: #b2452f;
   --warn: #b7791f;
-  --c1: #0f6b5c; --c2: #d08a2e; --c3: #5872c4; --c4: #b2452f; --c5: #8a5aa8; --c6: #3e9bb3; --c7: #7a8a3a; --c8: #a0627a;
+  --c1: #0f6b5c; --c2: #d08a2e; --c3: #5872c4; --c4: #b2452f; --c5: #8a5aa8; --c6: #3e9bb3; --c7: #7a8a3a; --c8: #a0627a; --c9: #2f8f6f;
   --display: "Bricolage Grotesque", "Segoe UI", system-ui, sans-serif;
   --body: "Public Sans", "Segoe UI", system-ui, sans-serif;
   --mono: "JetBrains Mono", ui-monospace, "SF Mono", Menlo, monospace;
@@ -28,12 +28,12 @@
 @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
   --bg: #0f1513; --surface: #17201d; --fg: #e4ece9; --muted: #93a39d; --line: #2a3632;
   --accent: #4fc3a8; --accent-soft: #1c3a33; --income: #5fcf91; --expense: #f0876f; --warn: #e8b45a;
-  --c1: #4fc3a8; --c2: #e8a94f; --c3: #8ea3ec; --c4: #f0876f; --c5: #c39ae0; --c6: #6cc6dd; --c7: #b5c46a; --c8: #e09ab4;
+  --c1: #4fc3a8; --c2: #e8a94f; --c3: #8ea3ec; --c4: #f0876f; --c5: #c39ae0; --c6: #6cc6dd; --c7: #b5c46a; --c8: #e09ab4; --c9: #7fd6b0;
   color-scheme: dark; } }
 :root[data-theme="dark"] {
   --bg: #0f1513; --surface: #17201d; --fg: #e4ece9; --muted: #93a39d; --line: #2a3632;
   --accent: #4fc3a8; --accent-soft: #1c3a33; --income: #5fcf91; --expense: #f0876f; --warn: #e8b45a;
-  --c1: #4fc3a8; --c2: #e8a94f; --c3: #8ea3ec; --c4: #f0876f; --c5: #c39ae0; --c6: #6cc6dd; --c7: #b5c46a; --c8: #e09ab4;
+  --c1: #4fc3a8; --c2: #e8a94f; --c3: #8ea3ec; --c4: #f0876f; --c5: #c39ae0; --c6: #6cc6dd; --c7: #b5c46a; --c8: #e09ab4; --c9: #7fd6b0;
   color-scheme: dark;
 }
 * { box-sizing: border-box; }
@@ -140,7 +140,7 @@ svg text { fill: var(--muted); font-family: var(--mono); font-size: 10px; }
       </div>
       <select id="currency" aria-label="Currency">
         <option value="USD">$ USD</option><option value="EUR">€ EUR</option><option value="GBP">£ GBP</option>
-        <option value="TND">TND</option><option value="MAD">MAD</option><option value="AED">AED</option>
+        <option value="IQD">IQD (Iraqi dinar)</option><option value="TND">TND</option><option value="MAD">MAD</option><option value="AED">AED</option>
         <option value="SAR">SAR</option><option value="CAD">CA$ CAD</option>
       </select>
     </div>
@@ -232,6 +232,7 @@ svg text { fill: var(--muted); font-family: var(--mono); font-size: 10px; }
     { id: "bills", name: "Bills & utilities", color: "--c5" },
     { id: "health", name: "Health", color: "--c6" },
     { id: "fun", name: "Fun & shopping", color: "--c7" },
+    { id: "savings", name: "Savings", color: "--c9" },
     { id: "other", name: "Other", color: "--c8" },
   ];
   const INC_CATS = [
@@ -266,10 +267,11 @@ svg text { fill: var(--muted); font-family: var(--mono); font-size: 10px; }
       add(m, 24, "expense", "eating", 22 + j, "Lunch");
       add(m, 15, "expense", "fun", 45 + j * 9, m % 3 ? "Concert tickets" : "New shoes");
       if (m % 2) add(m, 19, "expense", "health", 35 + j, "Pharmacy");
+      add(m, 3, "expense", "savings", 300, "Moved to savings");
     }
     return {
       tx, currency: "USD", budget: 2400,
-      catBudgets: { housing: 1150, groceries: 300, transport: 80, eating: 120, bills: 120, health: 60, fun: 150, other: 50 },
+      catBudgets: { housing: 1150, groceries: 300, transport: 80, eating: 120, bills: 120, health: 60, fun: 150, savings: 300, other: 50 },
     };
   }
 
@@ -284,7 +286,7 @@ svg text { fill: var(--muted); font-family: var(--mono); font-size: 10px; }
 
   const money = (n, opts = {}) => {
     try {
-      return new Intl.NumberFormat(undefined, { style: "currency", currency: state.currency, maximumFractionDigits: opts.round ? 0 : 2, minimumFractionDigits: opts.round ? 0 : 2 }).format(n);
+      return new Intl.NumberFormat(undefined, { style: "currency", currency: state.currency, maximumFractionDigits: (opts.round || state.currency === "IQD") ? 0 : 2, minimumFractionDigits: (opts.round || state.currency === "IQD") ? 0 : 2 }).format(n);
     } catch (e) { return n.toFixed(2) + " " + state.currency; }
   };
   const cssVar = v => getComputedStyle(document.documentElement).getPropertyValue(v).trim();
@@ -392,7 +394,7 @@ svg text { fill: var(--muted); font-family: var(--mono); font-size: 10px; }
   function niceStep(raw) { const p = Math.pow(10, Math.floor(Math.log10(raw || 1))); const n = raw / p; return (n <= 1 ? 1 : n <= 2 ? 2 : n <= 5 ? 5 : 10) * p; }
   function short(v) { return v >= 1000 ? (v / 1000).toFixed(v % 1000 ? 1 : 0) + "k" : String(Math.round(v)); }
   function esc(s) { return String(s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c])); }
-  const parseAmt = v => { const n = parseFloat(String(v).replace(/,/g, ".").replace(/[^\d.]/g, "")); return isFinite(n) ? Math.round(n * 100) / 100 : NaN; };
+  const parseAmt = v => { let t = String(v).trim(); t = /\d,\d{3}(\D|$)/.test(t) ? t.replace(/,/g, "") : t.replace(/,/g, "."); const n = parseFloat(t.replace(/[^\d.]/g, "")); return isFinite(n) ? Math.round(n * 100) / 100 : NaN; };
 
   // events
   $("prev").onclick = () => { view.setMonth(view.getMonth() - 1); render(); };
@@ -432,6 +434,7 @@ svg text { fill: var(--muted); font-family: var(--mono); font-size: 10px; }
     bills: ["bill", "electric", "water", "internet", "phone", "wifi", "utilit", "subscription", "insurance"],
     health: ["pharmacy", "doctor", "medicine", "dentist", "hospital", "gym", "health"],
     fun: ["movie", "cinema", "concert", "game", "clothes", "shoes", "shopping", "gift for", "book", "netflix", "spotify"],
+    savings: ["saving", "saved", "put aside", "set aside", "emergency fund"],
     salary: ["salary", "paycheck", "wage", "payday"],
     freelance: ["freelance", "client", "side job", "side income", "design job", "sold"],
     gift: ["gift", "present"],
@@ -439,9 +442,11 @@ svg text { fill: var(--muted); font-family: var(--mono); font-size: 10px; }
   const INCOME_WORDS = ["earned", "got paid", "received", "income", "salary", "paycheck", "wage", "paid me", "refund", "sold", "bonus", "got "];
   function parseEntry(text) {
     const s = " " + text.toLowerCase().replace(/[“”"]/g, "") + " ";
-    const m = s.match(/(\d+(?:[.,]\d{1,2})?)/);
+    const m = s.match(/(\d{1,3}(?:[,\s]\d{3})+(?:\.\d{1,2})?|\d+(?:[.,]\d{1,2})?)(\s*(k|thousand|million)\b)?/);
     if (!m) return null;
-    const amount = Math.round(parseFloat(m[1].replace(",", ".")) * 100) / 100;
+    const raw = /[,\s]\d{3}/.test(m[1]) ? m[1].replace(/[,\s]/g, "") : m[1].replace(",", ".");
+    const mult = !m[3] ? 1 : m[3] === "million" ? 1e6 : 1000;
+    const amount = Math.round(parseFloat(raw) * mult * 100) / 100;
     if (!(amount > 0)) return null;
     const spendWords = /\b(spent|spend|paid for|paid|bought|buy|cost|for)\b/;
     let t = INCOME_WORDS.some(w => s.includes(w)) && !/\b(spent|bought|paid for)\b/.test(s) ? "income" : "expense";
@@ -452,8 +457,9 @@ svg text { fill: var(--muted); font-family: var(--mono); font-size: 10px; }
     const d = new Date();
     if (/\byesterday\b/.test(s)) d.setDate(d.getDate() - 1);
     const date = d.getFullYear() + "-" + pad(d.getMonth() + 1) + "-" + pad(d.getDate());
-    let note = text.replace(m[1], "")
-      .replace(/\b(i |I )?(spent|spend|paid for|paid|bought|got paid|got|earned|received|cost|on|for|of|yesterday|today|dollars?|euros?|pounds?|dinars?|dirhams?|riyals?|bucks|usd|eur|gbp|tnd|mad|aed|sar|cad)\b/gi, " ")
+    const hit = m[0].trim(), at = text.toLowerCase().indexOf(hit);
+    let note = (at >= 0 ? text.slice(0, at) + " " + text.slice(at + hit.length) : text)
+      .replace(/\b(i |I )?(spent|spend|paid for|paid|bought|got paid|got|earned|received|cost|on|for|of|yesterday|today|dollars?|euros?|pounds?|dinars?|dirhams?|riyals?|bucks|usd|eur|gbp|tnd|mad|aed|sar|cad|iqd)\b/gi, " ")
       .replace(/[$€£]/g, "").replace(/\s+/g, " ").trim();
     note = note ? note[0].toUpperCase() + note.slice(1) : catOf(cat).name;
     return { type: t, cat, amount, date, note };
