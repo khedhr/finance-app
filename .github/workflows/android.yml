@@ -32,7 +32,7 @@ jobs:
           npm install
           cp index.html www/index.html
           npx cap add android
-          npx capacitor-assets generate --android --iconBackgroundColor '#0f6b5c' --splashBackgroundColor '#0f6b5c'
+          npx capacitor-assets generate --android --iconBackgroundColor '#c4522c' --splashBackgroundColor '#0f6b5c'
           npx cap sync android
 
       - name: Use the app's fixed signing key (so updates install over the old version)
