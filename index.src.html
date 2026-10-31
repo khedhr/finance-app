@@ -16,6 +16,7 @@
   --expense: #b2452f;
   --warn: #b7791f;
   --c1: #0f6b5c; --c2: #d08a2e; --c3: #5872c4; --c4: #b2452f; --c5: #8a5aa8; --c6: #3e9bb3; --c7: #7a8a3a; --c8: #a0627a; --c9: #2f8f6f; --c10: #6b6f86;
+  --side: #e8eeec; --side-fg: #16201d; --side-muted: #5d6b66; --side-hover: rgba(15,107,92,.08); --side-active: #d6e4df; --surface-dim: rgba(255,255,255,.35);
   --display: "Bricolage Grotesque", "Segoe UI", system-ui, sans-serif;
   --body: "Public Sans", "Segoe UI", system-ui, sans-serif;
   --mono: "JetBrains Mono", ui-monospace, "SF Mono", Menlo, monospace;
@@ -24,17 +25,75 @@
   --bg: #0f1513; --surface: #17201d; --fg: #e4ece9; --muted: #93a39d; --line: #2a3632;
   --accent: #4fc3a8; --accent-soft: #1c3a33; --income: #5fcf91; --expense: #f0876f; --warn: #e8b45a;
   --c1: #4fc3a8; --c2: #e8a94f; --c3: #8ea3ec; --c4: #f0876f; --c5: #c39ae0; --c6: #6cc6dd; --c7: #b5c46a; --c8: #e09ab4; --c9: #7fd6b0; --c10: #b3b7cf;
+  --side: #0b100e; --side-fg: #e4ece9; --side-muted: #93a39d; --side-hover: rgba(255,255,255,.06); --side-active: #1f2b27;
   color-scheme: dark; } }
 :root[data-theme="dark"] {
   --bg: #0f1513; --surface: #17201d; --fg: #e4ece9; --muted: #93a39d; --line: #2a3632;
   --accent: #4fc3a8; --accent-soft: #1c3a33; --income: #5fcf91; --expense: #f0876f; --warn: #e8b45a;
   --c1: #4fc3a8; --c2: #e8a94f; --c3: #8ea3ec; --c4: #f0876f; --c5: #c39ae0; --c6: #6cc6dd; --c7: #b5c46a; --c8: #e09ab4; --c9: #7fd6b0; --c10: #b3b7cf;
+  --side: #0b100e; --side-fg: #e4ece9; --side-muted: #93a39d; --side-hover: rgba(255,255,255,.06); --side-active: #1f2b27;
   color-scheme: dark;
 }
 * { box-sizing: border-box; }
 [hidden] { display: none !important; }
 body { background: var(--bg); color: var(--fg); font-family: var(--body); font-size: 15px; line-height: 1.5; }
-.wrap { max-width: 1120px; margin: 0 auto; padding-block: 24px 48px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); display: grid; gap: 20px; }
+html, body { height: 100%; }
+body { margin: 0; }
+.wrap { display: flex; min-height: 100%; }
+.main { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+.page { width: 100%; max-width: 780px; margin: 0 auto; padding-block: 8px 40px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); display: grid; gap: 16px; align-content: start; }
+.topbar { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 5; background: var(--bg); display: flex; align-items: center; gap: 10px; padding-block: 10px; padding-left: max(12px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px); z-index: 10; background: var(--bg); }
+.topbar h1 { font-size: 1.15rem; font-weight: 700; flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ico { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; flex: none; }
+.iconbtn.plain { border: 0; background: transparent; display: grid; place-items: center; color: var(--fg); }
+.iconbtn.plain:hover { background: var(--side-hover); }
+.side { width: 260px; flex: none; background: var(--side); color: var(--side-fg); display: flex; flex-direction: column; gap: 4px; padding: 12px 10px; padding-top: calc(12px + env(safe-area-inset-top, 0px)); padding-left: max(10px, env(safe-area-inset-left, 0px)); position: sticky; top: 0; height: 100vh; height: 100dvh; overflow-y: auto; }
+.side-top { display: flex; align-items: center; justify-content: space-between; padding: 2px 4px 10px 8px; }
+.brand { display: flex; align-items: center; gap: 8px; font-family: var(--display); font-weight: 700; font-size: 1.05rem; }
+.brand-dot { width: 18px; height: 18px; border-radius: 6px; background: var(--accent); box-shadow: inset 0 -6px 0 var(--surface-dim); }
+.side-nav { display: grid; gap: 2px; margin-top: 6px; }
+.nav { display: flex; align-items: center; gap: 12px; padding: 9px 10px; border-radius: 10px; color: inherit; text-decoration: none; font-weight: 500; border: 0; background: transparent; text-align: left; width: 100%; font-size: 0.97rem; }
+.nav:hover { background: var(--side-hover); }
+.nav[aria-current="page"] { background: var(--side-active); }
+.side-foot { margin-top: auto; padding: 8px 10px; color: var(--side-muted); }
+#sideClose { display: none; }
+.scrim { position: fixed; inset: 0; background: rgba(0,0,0,.4); z-index: 39; }
+@media (min-width: 901px) { #menuBtn { display: none; } .scrim { display: none !important; } }
+@media (max-width: 900px) {
+  .side { position: fixed; z-index: 40; left: 0; top: 0; bottom: 0; height: auto; width: min(290px, 84vw); transform: translateX(-102%); transition: transform .22s ease; padding-bottom: calc(12px + env(safe-area-inset-bottom, 0px)); }
+  .side.open { transform: none; box-shadow: 0 0 40px rgba(0,0,0,.25); }
+  #sideClose { display: grid; }
+}
+@media (prefers-reduced-motion: reduce) { .side { transition: none; } }
+.chatpage { min-height: calc(100dvh - 60px); display: flex; flex-direction: column; gap: 0; padding-bottom: 0; }
+.chatpage[hidden] { display: none !important; }
+.chat-log:empty { display: none; }
+.chat-empty { margin: auto 0; display: grid; justify-items: center; gap: 10px; text-align: center; padding: 24px 0; }
+.hello-mark { width: 44px; height: 44px; border-radius: 14px; background: var(--accent); position: relative; }
+.hello-mark::after { content: ""; position: absolute; left: 50%; top: 9px; width: 12px; height: 12px; margin-left: -6px; border-radius: 50%; background: var(--c2); }
+.hello { font-size: clamp(1.5rem, 5vw, 2rem); font-weight: 600; letter-spacing: -0.01em; }
+.chips { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; margin-top: 6px; }
+.chip { border: 1px solid var(--line); background: var(--surface); border-radius: 99px; padding: 7px 14px; font-size: 0.9rem; color: var(--muted); }
+.chip:hover { border-color: var(--accent); color: var(--fg); }
+.chat-log { list-style: none; margin: auto 0 0; padding: 8px 0 0; display: flex; flex-direction: column; gap: 14px; align-self: end; min-width: 0; }
+.msg { max-width: 85%; line-height: 1.5; overflow-wrap: anywhere; }
+.msg.me { align-self: flex-end; background: var(--side-active); padding: 9px 14px; border-radius: 18px 18px 4px 18px; }
+.msg.app { align-self: flex-start; display: flex; gap: 10px; align-items: flex-start; }
+.msg.app::before { content: ""; flex: none; width: 22px; height: 22px; border-radius: 7px; background: var(--accent); margin-top: 1px; }
+.msg.app.bad span { color: var(--expense); }
+.msg.typing span { color: var(--muted); }
+.composer { position: sticky; bottom: 0; display: grid; gap: 4px; padding: 12px 0 calc(14px + env(safe-area-inset-bottom, 0px)); background: linear-gradient(to bottom, transparent, var(--bg) 18px); }
+.composer-box { display: flex; align-items: center; gap: 8px; background: var(--surface); border: 1px solid var(--line); border-radius: 22px; padding: 6px 6px 6px 16px; box-shadow: 0 2px 12px rgba(0,0,0,.05); }
+.composer-box:focus-within { border-color: var(--accent); }
+.composer-box input { flex: 1; min-width: 0; border: 0; background: transparent; padding: 10px 0; font-size: 1rem; outline: none; }
+.send { flex: none; width: 40px; height: 40px; border-radius: 50%; border: 0; background: var(--accent); color: var(--surface); display: grid; place-items: center; }
+.send:disabled { opacity: .5; }
+.composer .mic { width: 40px; height: 40px; background: transparent; color: var(--fg); }
+.composer .mic:hover { background: var(--side-hover); }
+.composer .mic.on { background: var(--expense); color: var(--surface); }
+.composer .ai-badge { text-align: center; font-weight: 500; color: var(--muted); font-size: 0.75rem; }
+.sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; margin: 0; }
 h1, h2 { font-family: var(--display); margin: 0; text-wrap: balance; }
 h1 { font-size: 1.9rem; font-weight: 700; letter-spacing: -0.01em; }
 h2 { font-size: 1.1rem; font-weight: 700; }
@@ -44,17 +103,14 @@ button, input, select { font: inherit; color: inherit; }
 button { cursor: pointer; }
 :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 
-header { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; }
-.month { display: flex; align-items: center; gap: 6px; }
-.month span { font-family: var(--display); font-weight: 500; font-size: 1.1rem; min-width: 9.5em; text-align: center; }
+.month { display: flex; align-items: center; gap: 4px; flex: none; }
 .iconbtn { border: 1px solid var(--line); background: var(--surface); border-radius: 8px; width: 36px; height: 36px; font-size: 1.1rem; line-height: 1; }
 .iconbtn:hover { border-color: var(--accent); }
-.tools { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; min-width: 0; }
 .wrap > * { min-width: 0; }
 .cols > div, .panel, .quick, .setting, .wrap { grid-template-columns: minmax(0, 1fr); }
 input[type=date] { min-width: 0; }
 #currency { max-width: 100%; }
-@media (max-width: 480px) { .month span { min-width: 8em; font-size: 1rem; } }
+.month span { font-family: var(--display); font-weight: 500; font-size: 0.95rem; min-width: 7.5em; text-align: center; }
 select { border: 1px solid var(--line); background: var(--surface); border-radius: 8px; padding: 6px 8px; }
 
 .banner { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; justify-content: space-between; background: var(--accent-soft); border-radius: 10px; padding: 10px 14px; font-size: 0.92rem; }
@@ -62,7 +118,7 @@ select { border: 1px solid var(--line); background: var(--surface); border-radiu
 
 .summary { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 12px; }
 .stat { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 14px 16px; display: grid; gap: 4px; }
-.stat .num { font-size: 1.45rem; font-weight: 500; }
+.stat .num { font-size: clamp(1.05rem, 4.6vw, 1.45rem); font-weight: 500; overflow-wrap: anywhere; }
 .in { color: var(--income); } .out { color: var(--expense); }
 .meter { height: 8px; background: var(--line); border-radius: 99px; overflow: hidden; margin-top: 6px; }
 .meter i { display: block; height: 100%; background: var(--accent); border-radius: 99px; transition: width .3s; }
@@ -113,10 +169,6 @@ form.add input, form.add select { width: 100%; border: 1px solid var(--line); ba
 .debts .payrow { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
 .debts .payrow input { width: 8em; border: 1px solid var(--line); background: var(--bg); border-radius: 6px; padding: 5px 8px; font-family: var(--mono); }
 .debts li.closed { opacity: 0.6; }
-.tips { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
-.tips li { display: grid; grid-template-columns: 22px minmax(0, 1fr); gap: 8px; align-items: start; }
-.tips .ic { width: 22px; height: 22px; border-radius: 50%; display: grid; place-items: center; font-size: 0.8rem; font-weight: 700; color: var(--surface); }
-.ic.good { background: var(--income); } .ic.bad { background: var(--expense); } .ic.info { background: var(--accent); }
 .filters { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
 .filters .seg button { padding: 6px 12px; }
 .seg button[aria-pressed="true"].a { background: var(--accent); color: var(--surface); }
@@ -174,58 +226,74 @@ svg text { fill: var(--muted); font-family: var(--mono); font-size: 10px; }
 </style>
 
 <div class="wrap">
-  <header>
-    <div>
-      <h1>Pocket Ledger</h1>
-      <div class="small">Your money, month by month. Everything stays on this device.</div>
+  <aside class="side" id="side" aria-label="Menu">
+    <div class="side-top">
+      <span class="brand"><span class="brand-dot" aria-hidden="true"></span>Pocket Ledger</span>
+      <button class="iconbtn plain" id="sideClose" aria-label="Close menu"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
     </div>
-    <div class="tools">
-      <div class="month">
+    <button class="nav" type="button" id="newChat"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg><span>New chat</span></button>
+    <nav class="side-nav">
+      <a class="nav" href="#chat" data-nav="chat"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h16v11H8l-4 4V5z"/></svg><span>Chat</span></a>
+      <a class="nav" href="#entries" data-nav="entries"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 6h12M8 12h12M8 18h12M4 6h.01M4 12h.01M4 18h.01"/></svg><span>Entries</span></a>
+      <a class="nav" href="#debts" data-nav="debts"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 7h11l-3-3M17 17H6l3 3"/></svg><span>Debts</span></a>
+      <a class="nav" href="#goals" data-nav="goals"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="4"/><circle cx="12" cy="12" r=".5"/></svg><span>Savings goals</span></a>
+      <a class="nav" href="#charts" data-nav="charts"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 20V10M12 20V4M19 20v-7"/></svg><span>Charts</span></a>
+      <a class="nav" href="#app-settings" data-nav="app-settings"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg><span>Settings</span></a>
+    </nav>
+    <div class="side-foot small" id="sideFoot"></div>
+  </aside>
+  <div class="scrim" id="scrim" hidden></div>
+
+  <div class="main">
+    <header class="topbar">
+      <button class="iconbtn plain" id="menuBtn" aria-label="Open menu"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h10"/></svg></button>
+      <h1 id="pageTitle">Pocket Ledger</h1>
+      <div class="month" id="monthCtl" hidden>
         <button class="iconbtn" id="prev" aria-label="Previous month">‹</button>
         <span id="monthLabel"></span>
         <button class="iconbtn" id="next" aria-label="Next month">›</button>
       </div>
-      <select id="currency" aria-label="Currency">
-        <option value="USD">$ USD</option><option value="IQD">IQD (Iraqi dinar)</option>
-      </select>
-    </div>
-  </header>
+    </header>
 
+    <section class="page chatpage" data-page="chat">
+      <div class="chat-empty" id="chatEmpty">
+        <div class="hello-mark" aria-hidden="true"></div>
+        <h2 class="hello">What did you spend today?</h2>
+        <p class="small" id="chatSummary"></p>
+        <div class="chips" id="chips">
+          <button type="button" class="chip">Taxi 5,000</button>
+          <button type="button" class="chip">Got my salary 1,200,000</button>
+          <button type="button" class="chip">Ali owes me 20k</button>
+        </div>
+      </div>
+      <ol class="chat-log" id="chatLog" aria-live="polite"></ol>
+      <form class="composer" id="quickForm" novalidate>
+        <div class="composer-box">
+          <input id="quick" placeholder="Tell me what you spent or earned…" autocomplete="off" enterkeyhint="send" aria-label="Message">
+          <button type="button" class="mic" id="mic" aria-label="Speak" title="Speak">
+            <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path fill="currentColor" d="M12 14a3 3 0 0 0 3-3V5a3 3 0 0 0-6 0v6a3 3 0 0 0 3 3Zm5-3a5 5 0 0 1-10 0H5a7 7 0 0 0 6 6.92V21h2v-3.08A7 7 0 0 0 19 11h-2Z"/></svg>
+          </button>
+          <button type="submit" class="send" id="quickGo" aria-label="Send"><svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" d="M12 19V5M5 12l7-7 7 7"/></svg></button>
+        </div>
+        <span class="ai-badge" id="aiBadge" hidden>✦ Smart voice on</span>
+        <p id="quickMsg" hidden></p>
+      </form>
+    </section>
+
+    <section class="page" data-page="entries" hidden>
   <div class="banner" id="sample" hidden>
     <span>You're looking at example entries so you can see how it works.</span>
     <span><button class="linkbtn" id="clearSample">Clear examples and start fresh</button></span>
   </div>
-
-  <section class="summary" aria-label="This month">
+      <section class="summary" aria-label="This month">
     <div class="stat"><span class="label">Income</span><span class="num in" id="sIn"></span></div>
     <div class="stat"><span class="label">Spent</span><span class="num out" id="sOut"></span></div>
     <div class="stat"><span class="label">Left over</span><span class="num" id="sNet"></span></div>
     <div class="stat"><span class="label">Saved</span><span class="num" id="sSave" style="color:var(--c9)"></span>
       <div class="meter"><i id="sSaveBar" style="background:var(--c9)"></i></div><span class="small" id="sSaveNote"></span></div>
-  </section>
-
-  <section class="panel" id="tipsPanel" hidden>
-    <div class="panel-head"><h2>Tips for this month</h2><span class="small" id="tipsNote"></span></div>
-    <ul class="tips" id="tips"></ul>
-  </section>
-
-  <div class="cols">
-    <div style="display:grid;gap:20px;min-width:0">
+      </section>
       <section class="panel">
         <h2 id="formTitle">Add an entry</h2>
-        <form class="quick" id="quickForm" novalidate>
-          <label class="label" for="quick">Say it or type it</label>
-          <div class="quick-row">
-            <button type="button" class="mic" id="mic" aria-label="Speak an entry" title="Speak an entry">
-              <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path fill="currentColor" d="M12 14a3 3 0 0 0 3-3V5a3 3 0 0 0-6 0v6a3 3 0 0 0 3 3Zm5-3a5 5 0 0 1-10 0H5a7 7 0 0 0 6 6.92V21h2v-3.08A7 7 0 0 0 19 11h-2Z"/></svg>
-            </button>
-            <input id="quick" placeholder="Spent 25 on groceries yesterday" autocomplete="off" enterkeyhint="done">
-            <button class="primary" type="submit" style="width:auto" id="quickGo">Add</button>
-          </div>
-          <span class="ai-badge" id="aiBadge" hidden>✦ Smart voice on: say anything, even several things at once</span>
-          <p class="small" id="quickMsg">Tap the mic and say something like “paid 40 for taxi” or “got 3200 salary”.</p>
-        </form>
-        <div class="or"><span>or fill in the details</span></div>
         <form class="add" id="addForm" novalidate>
           <div class="f f-type">
             <div class="seg" role="group" aria-label="Entry type">
@@ -254,9 +322,9 @@ svg text { fill: var(--muted); font-family: var(--mono); font-size: 10px; }
         </div>
         <ul class="list" id="list"></ul>
       </section>
-    </div>
+    </section>
 
-    <div style="display:grid;gap:20px;min-width:0">
+    <section class="page" data-page="debts" hidden>
       <section class="panel" id="debtPanel">
         <div class="panel-head"><h2>Debts</h2><span class="small">Not tied to a month</span></div>
         <div class="debt-totals">
@@ -277,7 +345,9 @@ svg text { fill: var(--muted); font-family: var(--mono); font-size: 10px; }
         </form>
         <ul class="debts" id="debts"></ul>
       </section>
+    </section>
 
+    <section class="page" data-page="goals" hidden>
       <section class="panel">
         <div class="panel-head"><h2>Savings goals</h2><span class="small" id="goalsNote"></span></div>
         <form id="goalForm" novalidate class="debt-add">
@@ -288,7 +358,9 @@ svg text { fill: var(--muted); font-family: var(--mono); font-size: 10px; }
         <p class="err" id="gErr" role="alert" style="margin:0"></p>
         <ul class="goals" id="goals"></ul>
       </section>
+    </section>
 
+    <section class="page" data-page="charts" hidden>
       <section class="panel">
         <div class="panel-head"><h2>Where it went</h2><span class="small">Spending by category</span></div>
         <div class="donut-wrap">
@@ -302,10 +374,19 @@ svg text { fill: var(--muted); font-family: var(--mono); font-size: 10px; }
           <span class="small"><span class="in">■</span> income &nbsp;<span class="out">■</span> spent</span></div>
         <div class="chart-box"><svg id="bars" viewBox="0 0 420 200" width="100%" role="img" aria-label="Income and spending over the last six months"></svg></div>
       </section>
+    </section>
+
+    <section class="page" data-page="app-settings" hidden>
+      <section class="panel">
+        <div class="panel-head"><h2>Currency</h2></div>
+        <select id="currency" aria-label="Currency" style="width:fit-content">
+          <option value="USD">$ US dollar</option><option value="IQD">IQD Iraqi dinar</option>
+        </select>
+      </section>
 
       <section class="panel" id="aiKeyPanel">
         <div class="panel-head"><h2>Smart voice</h2></div>
-        <p class="small" style="margin:0">Let Claude understand what you say, in any language and with several things at once, like “taxi 5,000 and lunch 12,000, and Ali paid me back”. Paste a key below. It stays on this device.</p>
+        <p class="small" style="margin:0">Let AI understand what you say, in any language and with several things at once, like “taxi 5,000 and lunch 12,000, and Ali paid me back”. Paste a key below. It stays on this device.</p>
         <p class="small" style="margin:0"><b>Free:</b> a Google Gemini key from <a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener">aistudio.google.com/apikey</a> (Create API key, then Copy key). <b>Paid:</b> a Claude key from <a href="https://console.anthropic.com/settings/keys" target="_blank" rel="noopener">console.anthropic.com</a> (starts with sk-ant-).</p>
         <span class="small" id="aiState"></span>
         <div class="row data-row" id="aiKeyRow">
@@ -343,7 +424,7 @@ svg text { fill: var(--muted); font-family: var(--mono); font-size: 10px; }
         </div>
         <p class="small" id="dataMsg" role="status"></p>
       </section>
-    </div>
+    </section>
   </div>
 </div>
 
@@ -498,7 +579,6 @@ svg text { fill: var(--muted); font-family: var(--mono); font-size: 10px; }
     drawBars();
     renderDebts();
     renderGoals();
-    renderTips(m, key);
   }
 
   function drawBars() {
@@ -761,7 +841,7 @@ svg text { fill: var(--muted); font-family: var(--mono); font-size: 10px; }
     render();
     $("quick").value = "";
     msg.className = "small ok";
-    msg.textContent = "Added: " + e.note + ", " + catOf(e.cat).name + ", " + (e.type === "income" ? "+" : "−") + money(e.amount) + ". Wrong? Tap × on it below.";
+    msg.textContent = "Added: " + e.note + ", " + catOf(e.cat).name + ", " + (e.type === "income" ? "+" : "−") + money(e.amount) + ". Wrong? Fix it in Entries.";
   }
   // ---- AI understanding (Claude) ----
   const AI_KEY = "pocket-ledger-ai-key";
@@ -864,14 +944,62 @@ Rules: amounts are plain numbers ("25k" = 25000, "2 million" = 2000000). Resolve
       const n = applyActions(res && res.actions);
       if (n) $("quick").value = "";
       msg.className = "small " + (n ? "ok" : "bad");
-      msg.textContent = (res && res.reply ? res.reply : n ? "Saved." : "I didn't catch an amount. Try again.") + (n ? " Wrong? Edit or delete it below." : "");
+      msg.textContent = (res && res.reply ? res.reply : n ? "Saved." : "I didn't catch an amount. Try again.") + (n ? " Wrong? Fix it in Entries." : "");
     } catch (e) {
       if (e && (e.status === 401 || e.status === 403)) { localQuickAdd(text); msg.textContent += " (Your AI key didn't work, so the simple mode was used. Check it in Smart voice.)"; }
       else if (e && e.code === "not_granted") { sampleFn = null; renderAi(); localQuickAdd(text); }
       else { localQuickAdd(text); if ($("quickMsg").className.includes("ok")) $("quickMsg").textContent += " (AI wasn't reachable, used the simple mode.)"; }
     } finally { aiBusy = false; $("quickGo").disabled = false; }
   }
-  $("quickForm").onsubmit = ev => { ev.preventDefault(); quickAdd($("quick").value); };
+  // ---- chat ----
+  const CHAT_KEY = "pocket-ledger-chat";
+  let chat = []; try { chat = JSON.parse(localStorage.getItem(CHAT_KEY)) || []; } catch (e) { chat = []; }
+  const saveChat = () => { try { localStorage.setItem(CHAT_KEY, JSON.stringify(chat.slice(-60))); } catch (e) {} };
+  function drawChat() {
+    $("chatEmpty").hidden = chat.length > 0;
+    $("chatLog").innerHTML = chat.map(m => m.who === "me" ? `<li class="msg me">${esc(m.text)}</li>` : `<li class="msg app${m.bad ? " bad" : ""}"><span>${esc(m.text)}</span></li>`).join("");
+    const m = inMonth(ym(new Date()));
+    const inc = sum(m.filter(t => t.type === "income")), exp = sum(m.filter(t => t.type === "expense"));
+    $("chatSummary").textContent = m.length ? new Date().toLocaleDateString(undefined, { month: "long" }) + ": spent " + money(exp, { round: true }) + ", " + money(inc - exp, { round: true }) + " left" : "Say it or type it. I'll add it to your entries.";
+  }
+  function addMsg(who, text, bad) {
+    chat.push({ who, text, bad: !!bad }); saveChat(); drawChat();
+    requestAnimationFrame(() => window.scrollTo({ top: document.body.scrollHeight, behavior: "smooth" }));
+  }
+  async function sendChat(text) {
+    text = (text || "").trim(); if (!text) return;
+    $("quick").value = ""; $("quick").placeholder = "Tell me what you spent or earned…";
+    addMsg("me", text);
+    const li = document.createElement("li"); li.className = "msg app typing"; li.innerHTML = "<span>Thinking…</span>"; $("chatLog").appendChild(li);
+    $("quickMsg").textContent = ""; $("quickMsg").className = "";
+    await quickAdd(text);
+    li.remove();
+    const msg = $("quickMsg");
+    addMsg("app", msg.textContent || "Done.", msg.className.includes("bad"));
+  }
+  $("quickForm").onsubmit = ev => { ev.preventDefault(); sendChat($("quick").value); };
+  $("chips").onclick = e => { const c = e.target.closest(".chip"); if (c) { $("quick").value = c.textContent; $("quick").focus(); } };
+  $("newChat").onclick = () => { chat = []; saveChat(); drawChat(); go("chat"); };
+
+  // ---- pages & menu ----
+  const TITLES = { chat: "Pocket Ledger", entries: "Entries", debts: "Debts", goals: "Savings goals", charts: "Charts", "app-settings": "Settings" };
+  function go(page) {
+    if (!TITLES[page]) page = "chat";
+    document.querySelectorAll("[data-page]").forEach(el => el.hidden = el.dataset.page !== page);
+    document.querySelectorAll("[data-nav]").forEach(a => a.dataset.nav === page ? a.setAttribute("aria-current", "page") : a.removeAttribute("aria-current"));
+    $("pageTitle").textContent = TITLES[page];
+    $("monthCtl").hidden = !(page === "entries" || page === "charts");
+    closeSide();
+    if (page === "chat") drawChat();
+    window.scrollTo(0, page === "chat" ? document.body.scrollHeight : 0);
+  }
+  function openSide() { $("side").classList.add("open"); $("scrim").hidden = false; }
+  function closeSide() { $("side").classList.remove("open"); $("scrim").hidden = true; }
+  $("menuBtn").onclick = openSide;
+  $("sideClose").onclick = closeSide;
+  $("scrim").onclick = closeSide;
+  window.addEventListener("hashchange", () => go(location.hash.slice(1)));
+  document.addEventListener("keydown", e => { if (e.key === "Escape") closeSide(); });
   $("aiKeySave").onclick = () => {
     const k = $("aiKeyIn").value.trim();
     if (k.length < 20 || /\s/.test(k)) { $("aiMsg").className = "small bad"; $("aiMsg").textContent = "That doesn't look like a full key. Copy it again with the Copy key button."; return; }
@@ -884,9 +1012,7 @@ Rules: amounts are plain numbers ("25k" = 25000, "2 million" = 2000000). Resolve
   const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
   let rec = null, listening = false;
   function micFallback(reason) {
-    const msg = $("quickMsg");
-    msg.className = "small";
-    msg.textContent = (reason || "Voice isn't available here.") + " Tap the box and use the mic on your phone's keyboard instead.";
+    addMsg("app", (reason || "Voice isn't available here.") + " Tap the message box and use the mic on your phone's keyboard instead.");
     $("quick").focus();
   }
   async function nativeListen() {
@@ -897,15 +1023,15 @@ Rules: amounts are plain numbers ("25k" = 25000, "2 million" = 2000000). Resolve
       let perm = await C.nativePromise("SpeechRecognition", "checkPermissions", {});
       if (perm.speechRecognition !== "granted") perm = await C.nativePromise("SpeechRecognition", "requestPermissions", {});
       if (perm.speechRecognition !== "granted") return micFallback("The microphone is blocked. Allow it for Pocket Ledger in your phone settings, or");
-      $("mic").classList.add("on"); msg.className = "small"; msg.textContent = "Listening…";
+      $("mic").classList.add("on"); $("quick").placeholder = "Listening…";
       const res = await C.nativePromise("SpeechRecognition", "start", { language: navigator.language || "en-US", maxResults: 1, prompt: "Say what you spent or earned", popup: true, partialResults: false });
       $("mic").classList.remove("on");
       const said = res && res.matches && res.matches[0];
-      if (said) { $("quick").value = said; quickAdd(said); }
-      else { msg.className = "small"; msg.textContent = "I didn't hear anything. Tap the mic and try again."; }
+      if (said) { $("quick").value = said; sendChat(said); }
+      else addMsg("app", "I didn't hear anything. Tap the mic and try again.");
     } catch (e) {
       $("mic").classList.remove("on");
-      msg.className = "small"; msg.textContent = "I didn't catch that. Tap the mic and try again.";
+      addMsg("app", "I didn't catch that. Tap the mic and try again.");
     }
   }
   $("mic").onclick = () => {
@@ -919,7 +1045,7 @@ Rules: amounts are plain numbers ("25k" = 25000, "2 million" = 2000000). Resolve
       rec.interimResults = true;
       rec.maxAlternatives = 1;
       let finalText = "";
-      rec.onstart = () => { listening = true; $("mic").classList.add("on"); $("quickMsg").className = "small"; $("quickMsg").textContent = "Listening…"; };
+      rec.onstart = () => { listening = true; $("mic").classList.add("on"); $("quick").placeholder = "Listening…"; };
       rec.onresult = ev => {
         let txt = "";
         for (const r of ev.results) { txt += r[0].transcript; if (r.isFinal) finalText = txt; }
@@ -928,14 +1054,14 @@ Rules: amounts are plain numbers ("25k" = 25000, "2 million" = 2000000). Resolve
       rec.onerror = ev => {
         listening = false; $("mic").classList.remove("on");
         if (ev.error === "not-allowed" || ev.error === "service-not-allowed") micFallback("The microphone is blocked here.");
-        else if (ev.error === "no-speech") { $("quickMsg").className = "small"; $("quickMsg").textContent = "I didn't hear anything. Tap the mic and try again."; }
+        else if (ev.error === "no-speech") addMsg("app", "I didn't hear anything. Tap the mic and try again.");
         else micFallback();
       };
       rec.onend = () => {
         const wasListening = listening;
         listening = false; $("mic").classList.remove("on");
         const said = finalText || $("quick").value;
-        if (wasListening && said.trim()) quickAdd(said);
+        if (wasListening && said.trim()) sendChat(said);
       };
       rec.start();
     } catch (err) { listening = false; $("mic").classList.remove("on"); micFallback(); }
@@ -989,36 +1115,6 @@ Rules: amounts are plain numbers ("25k" = 25000, "2 million" = 2000000). Resolve
   };
   $("goals").onkeydown = e => { if (e.key === "Enter" && e.target.id === "fundAmt") { e.preventDefault(); const b = $("goals").querySelector('[data-act="fundsave"]'); if (b) b.click(); } };
 
-  // ---- monthly tips ----
-  function renderTips(m, key) {
-    const prevD = new Date(view.getFullYear(), view.getMonth() - 1, 1);
-    const isCur = key === ym(new Date()), today = new Date().getDate();
-    const pm = inMonth(ym(prevD)).filter(t => !isCur || Number(t.date.slice(8, 10)) <= today);
-    const tips = [];
-    const inc = sum(m.filter(t => t.type === "income"));
-    const exp = sum(m.filter(t => t.type === "expense" && t.cat !== "savings"));
-    const saved = sum(m.filter(t => t.cat === "savings"));
-    const prevName = prevD.toLocaleDateString(undefined, { month: "long" });
-    if (pm.length) {
-      const changes = EXP_CATS.filter(c => c.id !== "savings" && c.id !== "debt").map(c => {
-        const now = sum(m.filter(t => t.type === "expense" && t.cat === c.id)), before = sum(pm.filter(t => t.type === "expense" && t.cat === c.id));
-        return { c, now, before, diff: now - before, pct: before ? (now - before) / before : 0 };
-      }).filter(x => x.before > 0 && Math.abs(x.pct) >= 0.15 && Math.abs(x.diff) >= 0.02 * Math.max(1, exp));
-      const up = changes.filter(x => x.diff > 0).sort((a, b) => b.diff - a.diff)[0];
-      const down = changes.filter(x => x.diff < 0).sort((a, b) => a.diff - b.diff)[0];
-      if (up) tips.push(["bad", "!", `You spent ${Math.round(up.pct * 100)}% more on ${up.c.name} than in ${prevName} (${money(up.now, { round: true })} vs ${money(up.before, { round: true })}).`]);
-      if (down && down.now > 0) tips.push(["good", "✓", `Nice: ${Math.round(-down.pct * 100)}% less on ${down.c.name} than in ${prevName}.`]);
-    }
-    if (inc > 0 && exp + saved > inc) tips.push(["bad", "!", `You spent ${money(exp + saved - inc, { round: true })} more than you earned this month.`]);
-    else if (inc > 0 && saved > 0) tips.push(["good", "✓", `You saved ${Math.round(saved / inc * 100)}% of your income this month.`]);
-    else if (inc > 0 && saved === 0 && exp < inc) tips.push(["info", "i", `You have ${money(inc - exp, { round: true })} left. Moving some to savings now makes it easier to keep.`]);
-    const top = EXP_CATS.filter(c => c.id !== "savings" && c.id !== "housing").map(c => ({ c, v: sum(m.filter(t => t.type === "expense" && t.cat === c.id)) })).sort((a, b) => b.v - a.v)[0];
-    if (tips.length < 3 && top && top.v > 0 && exp > 0) tips.push(["info", "i", `Your biggest cost after housing is ${top.c.name}: ${Math.round(top.v / exp * 100)}% of your spending.`]);
-    $("tipsPanel").hidden = !tips.length;
-    $("tipsNote").textContent = pm.length ? "Compared with " + prevName + (isCur ? " up to the same day" : "") : "";
-    $("tips").innerHTML = tips.slice(0, 3).map(([k, ic, t]) => `<li><span class="ic ${k}" aria-hidden="true">${ic}</span><span>${esc(t)}</span></li>`).join("");
-  }
-
   // ---- native helpers ----
   const CAP = window.Capacitor;
   const isNative = !!(CAP && CAP.isNativePlatform && CAP.isNativePlatform());
@@ -1054,6 +1150,7 @@ Rules: amounts are plain numbers ("25k" = 25000, "2 million" = 2000000). Resolve
   $("date").value = todayStr();
   setType("expense");
   render();
+  go(location.hash.slice(1) || "chat");
   try { localStorage.removeItem("pocket-ledger-lock"); } catch (e) {}
 })();
 </script>

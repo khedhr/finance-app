@@ -10,8 +10,9 @@ A simple personal finance app that runs in your browser.
 - Edit or delete any entry
 - Track debts: what you owe and what people owe you, with partial payments
 - Savings goals with progress bars
-- Monthly tips comparing you with last month
+
 - Filter entries by spending, income or category
+- Opens on a chat screen: type or speak, and a side menu leads to Entries, Debts, Savings goals, Charts and Settings
 - Daily reminder notification (Android)
 - Save a backup file and restore it later
 - Currency: US dollar or Iraqi dinar
