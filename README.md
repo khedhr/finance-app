@@ -14,7 +14,7 @@ A simple personal finance app that runs in your browser.
 - Filter entries by spending, income or category
 - Daily reminder notification (Android)
 - Save a backup file and restore it later
-- Pick your currency (including USD and Iraqi dinar)
+- Currency: US dollar or Iraqi dinar
 - Savings category to track money you put aside
 
 Your data is saved in your browser on this device (nothing is sent anywhere).

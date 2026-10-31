@@ -186,9 +186,7 @@ svg text { fill: var(--muted); font-family: var(--mono); font-size: 10px; }
         <button class="iconbtn" id="next" aria-label="Next month">›</button>
       </div>
       <select id="currency" aria-label="Currency">
-        <option value="USD">$ USD</option><option value="EUR">€ EUR</option><option value="GBP">£ GBP</option>
-        <option value="IQD">IQD (Iraqi dinar)</option><option value="TND">TND</option><option value="MAD">MAD</option><option value="AED">AED</option>
-        <option value="SAR">SAR</option><option value="CAD">CA$ CAD</option>
+        <option value="USD">$ USD</option><option value="IQD">IQD (Iraqi dinar)</option>
       </select>
     </div>
   </header>
@@ -406,6 +404,7 @@ svg text { fill: var(--muted); font-family: var(--mono); font-size: 10px; }
   try { state = JSON.parse(localStorage.getItem(KEY)); } catch (e) { state = null; }
   if (!state || !Array.isArray(state.tx)) state = sampleData();
   if (!Array.isArray(state.debts)) state.debts = [];
+  if (state.currency !== "USD" && state.currency !== "IQD") state.currency = "USD";
   if (!Array.isArray(state.goals)) state.goals = [];
   const save = () => { try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) {} };
 
@@ -613,7 +612,7 @@ svg text { fill: var(--muted); font-family: var(--mono); font-size: 10px; }
       const d = JSON.parse(await f.text());
       if (!d || !Array.isArray(d.tx)) throw new Error("bad");
       const tx = d.tx.filter(t => t && t.id && (t.type === "income" || t.type === "expense") && typeof t.amount === "number" && /^\d{4}-\d{2}-\d{2}$/.test(t.date));
-      pending = { tx, goals: Array.isArray(d.goals) ? d.goals.filter(g => g && g.id && g.name && typeof g.target === "number") : [], debts: Array.isArray(d.debts) ? d.debts.filter(x => x && x.id && x.who && typeof x.amount === "number") : [], currency: d.currency || state.currency, budget: Number(d.budget) || 0, catBudgets: d.catBudgets && typeof d.catBudgets === "object" ? d.catBudgets : {} };
+      pending = { tx, goals: Array.isArray(d.goals) ? d.goals.filter(g => g && g.id && g.name && typeof g.target === "number") : [], debts: Array.isArray(d.debts) ? d.debts.filter(x => x && x.id && x.who && typeof x.amount === "number") : [], currency: d.currency === "IQD" || d.currency === "USD" ? d.currency : state.currency, budget: Number(d.budget) || 0, catBudgets: d.catBudgets && typeof d.catBudgets === "object" ? d.catBudgets : {} };
       const when = d.savedAt ? " from " + new Date(d.savedAt).toLocaleDateString() : "";
       $("restoreText").textContent = "This backup" + when + " has " + tx.length + " entries. It will replace everything in the app now.";
       $("restoreConfirm").hidden = false; dataMsg("");
