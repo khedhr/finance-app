@@ -312,6 +312,7 @@ svg text { fill: var(--muted); font-family: var(--mono); font-size: 10px; }
 
       <section class="panel">
         <div class="panel-head"><h2>Entries</h2><span class="small" id="count"></span></div>
+        <div class="data-row" style="margin:0 0 10px"><button class="ghost" type="button" id="exportBtn">Export month to Excel</button><span class="small" id="exportMsg" role="status"></span></div>
         <div class="filters">
           <div class="seg" role="group" aria-label="Show">
             <button type="button" class="a" data-f="all" aria-pressed="true">All</button>
@@ -712,6 +713,38 @@ svg text { fill: var(--muted); font-family: var(--mono); font-size: 10px; }
       const code = err && (err.code || err.message || "");
       if (/declined|cancel/i.test(String(code))) return dataMsg("Backup cancelled.");
       dataMsg("The backup couldn't be saved here. Try again, or use the Android app.", "bad");
+    }
+  };
+  async function saveOut(filename, data, mime, title) {
+    const cap = window.Capacitor;
+    if (cap && cap.isNativePlatform && cap.isNativePlatform()) {
+      const res = await cap.nativePromise("Filesystem", "writeFile", { path: filename, data, directory: "CACHE", encoding: "utf8" });
+      await cap.nativePromise("Share", "share", { title, url: res.uri, dialogTitle: title });
+      return "shared";
+    }
+    const dl = window.claude && window.claude.use ? await window.claude.use("downloads") : null;
+    if (dl) { await dl.save({ filename, data }); return "saved"; }
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(new Blob([data], { type: mime }));
+    a.download = filename; document.body.appendChild(a); a.click(); a.remove();
+    return "saved";
+  }
+  $("exportBtn").onclick = async () => {
+    const key = ym(view), rows = inMonth(key).slice().sort((a, b) => a.date.localeCompare(b.date));
+    const out = (t, k) => { $("exportMsg").textContent = t; $("exportMsg").className = "small " + (k || ""); };
+    if (!rows.length) return out("No entries this month to export.", "bad");
+    const q = v => { v = String(v); return /[",\n\r]/.test(v) ? '"' + v.replace(/"/g, '""') + '"' : v; };
+    const cur = state.currency, lines = [["Date", "Type", "Category", "Note", "Amount (" + cur + ")"].join(",")];
+    for (const t of rows) lines.push([t.date, t.type === "income" ? "Income" : "Spending", catOf(t.cat).name, t.note || "", (t.type === "income" ? 1 : -1) * t.amount].map(q).join(","));
+    const inc = sum(rows.filter(t => t.type === "income")), exp = sum(rows.filter(t => t.type === "expense"));
+    lines.push("", ["", "", "", "Total income", inc].join(","), ["", "", "", "Total spent", -exp].join(","), ["", "", "", "Left over", Math.round((inc - exp) * 100) / 100].join(","));
+    const filename = "pocket-ledger-" + key + ".csv";
+    try {
+      const r = await saveOut(filename, "\ufeff" + lines.join("\r\n"), "text/csv", "Pocket Ledger " + key);
+      out(r === "shared" ? "Ready. Open it with Excel or Google Sheets." : "Saved " + filename + ". It opens in Excel.", "ok");
+    } catch (err) {
+      if (/declined|cancel/i.test(String(err && (err.code || err.message) || ""))) return out("Export cancelled.");
+      out("The file couldn't be saved here. Try again.", "bad");
     }
   };
   let pending = null;
