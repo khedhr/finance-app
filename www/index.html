@@ -1,0 +1,528 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Pocket Ledger</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700&family=Public+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: one column on phones, a two-column ledger (entries left, budget + charts right) on wide screens. */
+:root {
+  --bg: #f3f6f5;
+  --surface: #ffffff;
+  --fg: #16201d;
+  --muted: #5d6b66;
+  --line: #dbe3e0;
+  --accent: #0f6b5c;
+  --accent-soft: #dcefe9;
+  --income: #1f7a4d;
+  --expense: #b2452f;
+  --warn: #b7791f;
+  --c1: #0f6b5c; --c2: #d08a2e; --c3: #5872c4; --c4: #b2452f; --c5: #8a5aa8; --c6: #3e9bb3; --c7: #7a8a3a; --c8: #a0627a; --c9: #2f8f6f;
+  --display: "Bricolage Grotesque", "Segoe UI", system-ui, sans-serif;
+  --body: "Public Sans", "Segoe UI", system-ui, sans-serif;
+  --mono: "JetBrains Mono", ui-monospace, "SF Mono", Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #0f1513; --surface: #17201d; --fg: #e4ece9; --muted: #93a39d; --line: #2a3632;
+  --accent: #4fc3a8; --accent-soft: #1c3a33; --income: #5fcf91; --expense: #f0876f; --warn: #e8b45a;
+  --c1: #4fc3a8; --c2: #e8a94f; --c3: #8ea3ec; --c4: #f0876f; --c5: #c39ae0; --c6: #6cc6dd; --c7: #b5c46a; --c8: #e09ab4; --c9: #7fd6b0;
+  color-scheme: dark; } }
+:root[data-theme="dark"] {
+  --bg: #0f1513; --surface: #17201d; --fg: #e4ece9; --muted: #93a39d; --line: #2a3632;
+  --accent: #4fc3a8; --accent-soft: #1c3a33; --income: #5fcf91; --expense: #f0876f; --warn: #e8b45a;
+  --c1: #4fc3a8; --c2: #e8a94f; --c3: #8ea3ec; --c4: #f0876f; --c5: #c39ae0; --c6: #6cc6dd; --c7: #b5c46a; --c8: #e09ab4; --c9: #7fd6b0;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body { background: var(--bg); color: var(--fg); font-family: var(--body); font-size: 15px; line-height: 1.5; }
+.wrap { max-width: 1120px; margin: 0 auto; padding-block: 24px 48px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); display: grid; gap: 20px; }
+h1, h2 { font-family: var(--display); margin: 0; text-wrap: balance; }
+h1 { font-size: 1.9rem; font-weight: 700; letter-spacing: -0.01em; }
+h2 { font-size: 1.1rem; font-weight: 700; }
+.num { font-family: var(--mono); font-variant-numeric: tabular-nums; }
+.label { font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); font-weight: 600; }
+button, input, select { font: inherit; color: inherit; }
+button { cursor: pointer; }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+header { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; }
+.month { display: flex; align-items: center; gap: 6px; }
+.month span { font-family: var(--display); font-weight: 500; font-size: 1.1rem; min-width: 9.5em; text-align: center; }
+.iconbtn { border: 1px solid var(--line); background: var(--surface); border-radius: 8px; width: 36px; height: 36px; font-size: 1.1rem; line-height: 1; }
+.iconbtn:hover { border-color: var(--accent); }
+.tools { display: flex; gap: 8px; align-items: center; }
+select { border: 1px solid var(--line); background: var(--surface); border-radius: 8px; padding: 6px 8px; }
+
+.banner { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; justify-content: space-between; background: var(--accent-soft); border-radius: 10px; padding: 10px 14px; font-size: 0.92rem; }
+.linkbtn { background: none; border: 0; color: var(--accent); font-weight: 600; text-decoration: underline; padding: 0; }
+
+.summary { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 12px; }
+.stat { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 14px 16px; display: grid; gap: 4px; }
+.stat .num { font-size: 1.45rem; font-weight: 500; }
+.in { color: var(--income); } .out { color: var(--expense); }
+.meter { height: 8px; background: var(--line); border-radius: 99px; overflow: hidden; margin-top: 6px; }
+.meter i { display: block; height: 100%; background: var(--accent); border-radius: 99px; transition: width .3s; }
+.meter i.over { background: var(--expense); } .meter i.near { background: var(--warn); }
+.small { font-size: 0.82rem; color: var(--muted); }
+
+.cols { display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr); gap: 20px; align-items: start; }
+@media (max-width: 860px) { .cols { grid-template-columns: minmax(0, 1fr); } }
+.panel { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 18px; display: grid; gap: 14px; min-width: 0; }
+.panel-head { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; flex-wrap: wrap; }
+
+form.add { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 10px; }
+form.add .f { display: grid; gap: 4px; min-width: 0; }
+form.add input, form.add select { width: 100%; border: 1px solid var(--line); background: var(--bg); border-radius: 8px; padding: 8px 10px; }
+.f-type { grid-column: span 6; } .f-amt { grid-column: span 2; } .f-cat { grid-column: span 2; } .f-date { grid-column: span 2; } .f-note { grid-column: span 4; } .f-go { grid-column: span 2; align-self: end; }
+@media (max-width: 520px) { .f-amt, .f-cat, .f-date { grid-column: span 3; } .f-date { grid-column: span 6; } .f-note, .f-go { grid-column: span 6; } }
+.seg { display: inline-flex; border: 1px solid var(--line); border-radius: 8px; overflow: hidden; width: fit-content; }
+.seg button { border: 0; background: transparent; padding: 7px 16px; font-weight: 600; color: var(--muted); }
+.seg button[aria-pressed="true"].e { background: var(--expense); color: var(--surface); }
+.seg button[aria-pressed="true"].i { background: var(--income); color: var(--surface); }
+.primary { background: var(--accent); color: var(--surface); border: 0; border-radius: 8px; padding: 9px 14px; font-weight: 600; width: 100%; }
+.primary:hover { filter: brightness(1.08); }
+.quick { display: grid; gap: 6px; }
+.quick-row { display: flex; gap: 8px; align-items: center; }
+.quick-row input { flex: 1; min-width: 0; border: 1px solid var(--line); background: var(--bg); border-radius: 8px; padding: 9px 12px; }
+.mic { flex: none; width: 44px; height: 44px; border-radius: 50%; border: 0; background: var(--accent); color: var(--surface); display: grid; place-items: center; }
+.mic.on { background: var(--expense); animation: pulse 1.2s ease-in-out infinite; }
+@keyframes pulse { 50% { box-shadow: 0 0 0 8px var(--accent-soft); } }
+@media (prefers-reduced-motion: reduce) { .mic.on { animation: none; } }
+#quickMsg.ok { color: var(--income); } #quickMsg.bad { color: var(--expense); }
+.or { display: flex; align-items: center; gap: 10px; color: var(--muted); font-size: 0.8rem; }
+.or::before, .or::after { content: ""; flex: 1; height: 1px; background: var(--line); }
+.err { color: var(--expense); font-size: 0.85rem; min-height: 1.2em; margin: -4px 0 0; }
+
+.list { list-style: none; margin: 0; padding: 0; display: grid; }
+.list li { display: grid; grid-template-columns: 10px minmax(0, 1fr) auto auto; gap: 12px; align-items: center; padding: 10px 2px; border-top: 1px solid var(--line); }
+.list li:first-child { border-top: 0; }
+.dot { width: 10px; height: 10px; border-radius: 50%; }
+.what { min-width: 0; }
+.what b { font-weight: 600; display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.what span { font-size: 0.8rem; color: var(--muted); }
+.del { border: 0; background: none; color: var(--muted); font-size: 1.1rem; padding: 4px 6px; border-radius: 6px; }
+.del:hover { color: var(--expense); background: var(--accent-soft); }
+.empty { color: var(--muted); padding: 18px 0; text-align: center; }
+
+.budgets { display: grid; gap: 12px; }
+.brow { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 2px 10px; align-items: center; }
+.brow .name { display: flex; align-items: center; gap: 8px; font-weight: 500; }
+.brow .meter { grid-column: 1 / -1; margin-top: 2px; }
+.brow input { width: 6.5em; border: 1px solid var(--line); background: var(--bg); border-radius: 6px; padding: 3px 6px; text-align: right; font-family: var(--mono); }
+.budget-total { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.budget-total input { width: 8em; border: 1px solid var(--line); background: var(--bg); border-radius: 8px; padding: 6px 8px; font-family: var(--mono); text-align: right; }
+
+.donut-wrap { display: grid; grid-template-columns: 160px minmax(0, 1fr); gap: 16px; align-items: center; }
+@media (max-width: 420px) { .donut-wrap { grid-template-columns: minmax(0, 1fr); justify-items: center; } }
+.legend { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; font-size: 0.88rem; width: 100%; }
+.legend li { display: grid; grid-template-columns: 10px minmax(0, 1fr) auto; gap: 8px; align-items: center; }
+svg text { fill: var(--muted); font-family: var(--mono); font-size: 10px; }
+.chart-box { overflow-x: auto; }
+@media (prefers-reduced-motion: reduce) { .meter i { transition: none; } }
+</style>
+
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div>
+      <h1>Pocket Ledger</h1>
+      <div class="small">Your money, month by month. Everything stays on this device.</div>
+    </div>
+    <div class="tools">
+      <div class="month">
+        <button class="iconbtn" id="prev" aria-label="Previous month">‹</button>
+        <span id="monthLabel"></span>
+        <button class="iconbtn" id="next" aria-label="Next month">›</button>
+      </div>
+      <select id="currency" aria-label="Currency">
+        <option value="USD">$ USD</option><option value="EUR">€ EUR</option><option value="GBP">£ GBP</option>
+        <option value="IQD">IQD (Iraqi dinar)</option><option value="TND">TND</option><option value="MAD">MAD</option><option value="AED">AED</option>
+        <option value="SAR">SAR</option><option value="CAD">CA$ CAD</option>
+      </select>
+    </div>
+  </header>
+
+  <div class="banner" id="sample" hidden>
+    <span>You're looking at example entries so you can see how it works.</span>
+    <span><button class="linkbtn" id="clearSample">Clear examples and start fresh</button></span>
+  </div>
+
+  <section class="summary" aria-label="This month">
+    <div class="stat"><span class="label">Income</span><span class="num in" id="sIn"></span></div>
+    <div class="stat"><span class="label">Spent</span><span class="num out" id="sOut"></span></div>
+    <div class="stat"><span class="label">Left over</span><span class="num" id="sNet"></span></div>
+    <div class="stat"><span class="label">Saved</span><span class="num" id="sSave" style="color:var(--c9)"></span>
+      <div class="meter"><i id="sSaveBar" style="background:var(--c9)"></i></div><span class="small" id="sSaveNote"></span></div>
+  </section>
+
+  <div class="cols">
+    <div style="display:grid;gap:20px;min-width:0">
+      <section class="panel">
+        <h2>Add an entry</h2>
+        <form class="quick" id="quickForm" novalidate>
+          <label class="label" for="quick">Say it or type it</label>
+          <div class="quick-row">
+            <button type="button" class="mic" id="mic" aria-label="Speak an entry" title="Speak an entry">
+              <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path fill="currentColor" d="M12 14a3 3 0 0 0 3-3V5a3 3 0 0 0-6 0v6a3 3 0 0 0 3 3Zm5-3a5 5 0 0 1-10 0H5a7 7 0 0 0 6 6.92V21h2v-3.08A7 7 0 0 0 19 11h-2Z"/></svg>
+            </button>
+            <input id="quick" placeholder="Spent 25 on groceries yesterday" autocomplete="off" enterkeyhint="done">
+            <button class="primary" type="submit" style="width:auto">Add</button>
+          </div>
+          <p class="small" id="quickMsg">Tap the mic and say something like “paid 40 for taxi” or “got 3200 salary”.</p>
+        </form>
+        <div class="or"><span>or fill in the details</span></div>
+        <form class="add" id="addForm" novalidate>
+          <div class="f f-type">
+            <div class="seg" role="group" aria-label="Entry type">
+              <button type="button" class="e" id="tExp" aria-pressed="true">Expense</button>
+              <button type="button" class="i" id="tInc" aria-pressed="false">Income</button>
+            </div>
+          </div>
+          <label class="f f-amt"><span class="label">Amount</span><input id="amt" inputmode="decimal" placeholder="0.00" autocomplete="off"></label>
+          <label class="f f-cat"><span class="label">Category</span><select id="cat"></select></label>
+          <label class="f f-date"><span class="label">Date</span><input id="date" type="date"></label>
+          <label class="f f-note"><span class="label">Note</span><input id="note" placeholder="e.g. Weekly groceries" maxlength="80" autocomplete="off"></label>
+          <div class="f f-go"><button class="primary" type="submit">Add</button></div>
+        </form>
+        <p class="err" id="err" role="alert"></p>
+      </section>
+
+      <section class="panel">
+        <div class="panel-head"><h2>Entries</h2><span class="small" id="count"></span></div>
+        <ul class="list" id="list"></ul>
+      </section>
+    </div>
+
+    <div style="display:grid;gap:20px;min-width:0">
+      <section class="panel">
+        <div class="panel-head"><h2>Where it went</h2><span class="small">Spending by category</span></div>
+        <div class="donut-wrap">
+          <svg id="donut" viewBox="0 0 160 160" width="160" height="160" role="img" aria-label="Spending by category"></svg>
+          <ul class="legend" id="legend"></ul>
+        </div>
+      </section>
+
+      <section class="panel">
+        <div class="panel-head"><h2>Monthly budget</h2></div>
+        <label class="budget-total"><span>Total for the month</span><input id="budgetTotal" inputmode="decimal"></label>
+        <div class="label">Limits per category</div>
+        <div class="budgets" id="budgets"></div>
+      </section>
+
+      <section class="panel">
+        <div class="panel-head"><h2>Last 6 months</h2>
+          <span class="small"><span class="in">■</span> income &nbsp;<span class="out">■</span> spent</span></div>
+        <div class="chart-box"><svg id="bars" viewBox="0 0 420 200" width="100%" role="img" aria-label="Income and spending over the last six months"></svg></div>
+      </section>
+    </div>
+  </div>
+</div>
+
+<script>
+(() => {
+  const EXP_CATS = [
+    { id: "housing", name: "Housing", color: "--c1" },
+    { id: "groceries", name: "Groceries", color: "--c2" },
+    { id: "transport", name: "Transport", color: "--c3" },
+    { id: "eating", name: "Eating out", color: "--c4" },
+    { id: "bills", name: "Bills & utilities", color: "--c5" },
+    { id: "health", name: "Health", color: "--c6" },
+    { id: "fun", name: "Fun & shopping", color: "--c7" },
+    { id: "savings", name: "Savings", color: "--c9" },
+    { id: "other", name: "Other", color: "--c8" },
+  ];
+  const INC_CATS = [
+    { id: "salary", name: "Salary" }, { id: "freelance", name: "Side income" },
+    { id: "gift", name: "Gifts" }, { id: "other-in", name: "Other income" },
+  ];
+  const KEY = "pocket-ledger-v1";
+
+  const pad = n => String(n).padStart(2, "0");
+  const ym = d => d.getFullYear() + "-" + pad(d.getMonth() + 1);
+  const todayStr = () => { const d = new Date(); return d.getFullYear() + "-" + pad(d.getMonth() + 1) + "-" + pad(d.getDate()); };
+  const uid = () => Math.random().toString(36).slice(2, 10);
+
+  function sampleData() {
+    const now = new Date(), tx = [];
+    const add = (mOff, day, type, cat, amount, note) => {
+      const d = new Date(now.getFullYear(), now.getMonth() - mOff, day);
+      if (mOff === 0 && day > now.getDate()) return;
+      tx.push({ id: uid(), type, cat, amount, note, date: d.getFullYear() + "-" + pad(d.getMonth() + 1) + "-" + pad(d.getDate()), sample: true });
+    };
+    for (let m = 0; m < 6; m++) {
+      const j = (m * 37) % 11;
+      add(m, 1, "income", "salary", 3200, "Monthly salary");
+      if (m % 2 === 0) add(m, 18, "income", "freelance", 300 + j * 20, "Design job");
+      add(m, 2, "expense", "housing", 1150, "Rent");
+      add(m, 5, "expense", "bills", 92 + j * 3, "Electricity & internet");
+      add(m, 6, "expense", "groceries", 84 + j * 4, "Supermarket");
+      add(m, 13, "expense", "groceries", 71 + j * 2, "Market");
+      add(m, 21, "expense", "groceries", 96 - j, "Supermarket");
+      add(m, 8, "expense", "transport", 60 + j * 2, "Transit pass");
+      add(m, 10, "expense", "eating", 38 + j * 5, "Dinner with friends");
+      add(m, 24, "expense", "eating", 22 + j, "Lunch");
+      add(m, 15, "expense", "fun", 45 + j * 9, m % 3 ? "Concert tickets" : "New shoes");
+      if (m % 2) add(m, 19, "expense", "health", 35 + j, "Pharmacy");
+      add(m, 3, "expense", "savings", 300, "Moved to savings");
+    }
+    return {
+      tx, currency: "USD", budget: 2400,
+      catBudgets: { housing: 1150, groceries: 300, transport: 80, eating: 120, bills: 120, health: 60, fun: 150, savings: 300, other: 50 },
+    };
+  }
+
+  let state;
+  try { state = JSON.parse(localStorage.getItem(KEY)); } catch (e) { state = null; }
+  if (!state || !Array.isArray(state.tx)) state = sampleData();
+  const save = () => { try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) {} };
+
+  let view = new Date(); view.setDate(1);
+  let type = "expense";
+  const $ = id => document.getElementById(id);
+
+  const money = (n, opts = {}) => {
+    try {
+      return new Intl.NumberFormat(undefined, { style: "currency", currency: state.currency, maximumFractionDigits: (opts.round || state.currency === "IQD") ? 0 : 2, minimumFractionDigits: (opts.round || state.currency === "IQD") ? 0 : 2 }).format(n);
+    } catch (e) { return n.toFixed(2) + " " + state.currency; }
+  };
+  const cssVar = v => getComputedStyle(document.documentElement).getPropertyValue(v).trim();
+  const catOf = (id) => EXP_CATS.find(c => c.id === id) || INC_CATS.find(c => c.id === id) || { id, name: id };
+  const colorOf = (id, t) => t === "income" ? "var(--income)" : "var(" + (catOf(id).color || "--c8") + ")";
+  const inMonth = (key) => state.tx.filter(t => t.date.slice(0, 7) === key);
+  const sum = (arr) => arr.reduce((s, t) => s + t.amount, 0);
+
+  function fillCats() {
+    const list = type === "expense" ? EXP_CATS : INC_CATS;
+    $("cat").innerHTML = list.map(c => `<option value="${c.id}">${c.name}</option>`).join("");
+  }
+  function setType(t) {
+    type = t;
+    $("tExp").setAttribute("aria-pressed", t === "expense");
+    $("tInc").setAttribute("aria-pressed", t === "income");
+    fillCats();
+  }
+
+  function render() {
+    const key = ym(view);
+    $("monthLabel").textContent = view.toLocaleDateString(undefined, { month: "long", year: "numeric" });
+    $("currency").value = state.currency;
+    $("sample").hidden = !state.tx.some(t => t.sample);
+
+    const m = inMonth(key);
+    const inc = sum(m.filter(t => t.type === "income"));
+    const exp = sum(m.filter(t => t.type === "expense"));
+    const saved = sum(m.filter(t => t.type === "expense" && t.cat === "savings"));
+    $("sIn").textContent = money(inc);
+    $("sOut").textContent = money(exp - saved);
+    $("sNet").textContent = money(inc - exp);
+    $("sNet").className = "num " + (inc - exp >= 0 ? "in" : "out");
+    const goal = state.catBudgets.savings || 0;
+    const pct = goal > 0 ? saved / goal : 0;
+    $("sSave").textContent = money(saved);
+    const bar = $("sSaveBar");
+    bar.parentElement.hidden = !goal;
+    bar.style.width = Math.min(100, pct * 100) + "%";
+    $("sSaveNote").textContent = goal > 0
+      ? (saved >= goal ? "Goal reached: " + money(goal, { round: true }) : Math.round(pct * 100) + "% of your " + money(goal, { round: true }) + " goal")
+      : (inc > 0 ? Math.round(saved / inc * 100) + "% of your income" : "Set a goal next to Savings below");
+
+    // entries
+    const sorted = [...m].sort((a, b) => b.date.localeCompare(a.date));
+    $("count").textContent = sorted.length ? sorted.length + (sorted.length === 1 ? " entry" : " entries") : "";
+    $("list").innerHTML = sorted.length ? sorted.map(t => {
+      const d = new Date(t.date + "T00:00:00").toLocaleDateString(undefined, { month: "short", day: "numeric" });
+      const sign = t.type === "income" ? "+" : "−";
+      return `<li><span class="dot" style="background:${colorOf(t.cat, t.type)}"></span>
+        <div class="what"><b>${esc(t.note || catOf(t.cat).name)}</b><span>${catOf(t.cat).name} · ${d}</span></div>
+        <span class="num ${t.type === "income" ? "in" : "out"}">${sign}${money(t.amount)}</span>
+        <button class="del" data-id="${t.id}" aria-label="Delete entry">×</button></li>`;
+    }).join("") : `<li class="empty" style="display:block">Nothing logged for this month yet. Add your first entry above.</li>`;
+
+    // donut
+    const byCat = EXP_CATS.map(c => ({ ...c, total: sum(m.filter(t => t.type === "expense" && t.cat === c.id)) })).filter(c => c.total > 0).sort((a, b) => b.total - a.total);
+    const svg = $("donut");
+    const R = 62, C = 2 * Math.PI * R;
+    let off = 0, parts = `<circle cx="80" cy="80" r="${R}" fill="none" stroke="var(--line)" stroke-width="22"/>`;
+    byCat.forEach(c => {
+      const len = exp ? (c.total / exp) * C : 0;
+      parts += `<circle cx="80" cy="80" r="${R}" fill="none" stroke="var(${c.color})" stroke-width="22" stroke-dasharray="${Math.max(0, len - 1.5)} ${C}" stroke-dashoffset="${-off}" transform="rotate(-90 80 80)"/>`;
+      off += len;
+    });
+    parts += `<text x="80" y="76" text-anchor="middle" style="font-size:9px">SPENT</text><text x="80" y="94" text-anchor="middle" style="font-size:13px;fill:var(--fg)">${money(exp, { round: true })}</text>`;
+    svg.innerHTML = parts;
+    $("legend").innerHTML = byCat.length ? byCat.map(c => `<li><span class="dot" style="background:var(${c.color})"></span><span>${c.name}</span><span class="num">${Math.round(c.total / exp * 100)}%</span></li>`).join("") : `<li class="small" style="display:block">No spending this month.</li>`;
+
+    // category budgets
+    $("budgetTotal").value = state.budget || "";
+    $("budgets").innerHTML = EXP_CATS.map(c => {
+      const spent = sum(m.filter(t => t.type === "expense" && t.cat === c.id));
+      const lim = state.catBudgets[c.id] || 0;
+      const p = lim ? spent / lim : 0;
+      return `<div class="brow"><span class="name"><span class="dot" style="background:var(${c.color})"></span>${c.name}</span>
+        <span class="small"><span class="num">${money(spent, { round: true })}</span> of <input id="cb-${c.id}" data-cat="${c.id}" inputmode="decimal" value="${lim || ""}" placeholder="no limit" aria-label="${c.name} limit"></span>
+        ${lim ? `<div class="meter"><i class="${p > 1 ? "over" : p > 0.85 ? "near" : ""}" style="width:${Math.min(100, p * 100)}%"></i></div>` : ""}</div>`;
+    }).join("");
+
+    drawBars();
+  }
+
+  function drawBars() {
+    const months = [];
+    for (let i = 5; i >= 0; i--) { const d = new Date(view.getFullYear(), view.getMonth() - i, 1); months.push(d); }
+    const data = months.map(d => { const m = inMonth(ym(d)); return { d, inc: sum(m.filter(t => t.type === "income")), exp: sum(m.filter(t => t.type === "expense")) }; });
+    const max = Math.max(1, ...data.map(x => Math.max(x.inc, x.exp)));
+    const step = niceStep(max / 4), top = Math.ceil(max / step) * step;
+    const L = 52, Rr = 8, T = 10, B = 26, W = 420, H = 200, ph = H - T - B, pw = W - L - Rr;
+    const y = v => T + ph - (v / top) * ph;
+    let s = "";
+    for (let v = 0; v <= top + 1e-9; v += step) {
+      s += `<line x1="${L}" x2="${W - Rr}" y1="${y(v)}" y2="${y(v)}" stroke="var(--line)" stroke-width="1"/>`;
+      s += `<text x="${L - 6}" y="${y(v) + 3}" text-anchor="end">${short(v)}</text>`;
+    }
+    const gw = pw / data.length, bw = Math.min(18, gw * 0.3);
+    data.forEach((x, i) => {
+      const cx = L + gw * i + gw / 2;
+      s += `<rect x="${cx - bw - 1}" y="${y(x.inc)}" width="${bw}" height="${Math.max(0, T + ph - y(x.inc))}" rx="3" fill="var(--income)"><title>Income ${money(x.inc)}</title></rect>`;
+      s += `<rect x="${cx + 1}" y="${y(x.exp)}" width="${bw}" height="${Math.max(0, T + ph - y(x.exp))}" rx="3" fill="var(--expense)"><title>Spent ${money(x.exp)}</title></rect>`;
+      const isCur = i === data.length - 1;
+      s += `<text x="${cx}" y="${H - 8}" text-anchor="middle" style="${isCur ? "fill:var(--fg);font-weight:500" : ""}">${x.d.toLocaleDateString(undefined, { month: "short" })}</text>`;
+    });
+    $("bars").innerHTML = s;
+  }
+  function niceStep(raw) { const p = Math.pow(10, Math.floor(Math.log10(raw || 1))); const n = raw / p; return (n <= 1 ? 1 : n <= 2 ? 2 : n <= 5 ? 5 : 10) * p; }
+  function short(v) { return v >= 1000 ? (v / 1000).toFixed(v % 1000 ? 1 : 0) + "k" : String(Math.round(v)); }
+  function esc(s) { return String(s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c])); }
+  const parseAmt = v => { let t = String(v).trim(); t = /\d,\d{3}(\D|$)/.test(t) ? t.replace(/,/g, "") : t.replace(/,/g, "."); const n = parseFloat(t.replace(/[^\d.]/g, "")); return isFinite(n) ? Math.round(n * 100) / 100 : NaN; };
+
+  // events
+  $("prev").onclick = () => { view.setMonth(view.getMonth() - 1); render(); };
+  $("next").onclick = () => { view.setMonth(view.getMonth() + 1); render(); };
+  $("tExp").onclick = () => setType("expense");
+  $("tInc").onclick = () => setType("income");
+  $("currency").onchange = e => { state.currency = e.target.value; save(); render(); };
+  $("clearSample").onclick = () => { state.tx = state.tx.filter(t => !t.sample); save(); render(); };
+  $("addForm").onsubmit = e => {
+    e.preventDefault();
+    const amount = parseAmt($("amt").value);
+    if (!(amount > 0)) { $("err").textContent = "Enter an amount greater than zero."; $("amt").focus(); return; }
+    const date = $("date").value || todayStr();
+    state.tx.push({ id: uid(), type, cat: $("cat").value, amount, note: $("note").value.trim(), date });
+    save();
+    $("err").textContent = ""; $("amt").value = ""; $("note").value = "";
+    const d = new Date(date + "T00:00:00"); view = new Date(d.getFullYear(), d.getMonth(), 1);
+    render(); $("amt").focus();
+  };
+  $("list").onclick = e => {
+    const b = e.target.closest(".del"); if (!b) return;
+    state.tx = state.tx.filter(t => t.id !== b.dataset.id); save(); render();
+  };
+  $("budgetTotal").onchange = e => { const n = parseAmt(e.target.value); state.budget = n > 0 ? n : 0; save(); render(); };
+  $("budgets").onchange = e => {
+    const c = e.target.dataset.cat; if (!c) return;
+    const n = parseAmt(e.target.value); if (n > 0) state.catBudgets[c] = n; else delete state.catBudgets[c];
+    save(); render();
+  };
+
+  // ---- quick add: speak or type a sentence ----
+  const KW = {
+    housing: ["rent", "mortgage", "housing", "landlord", "apartment"],
+    groceries: ["grocer", "supermarket", "market", "food shop", "vegetable", "fruit", "bread", "milk"],
+    transport: ["taxi", "uber", "bus", "train", "metro", "fuel", "gas station", "petrol", "parking", "transport", "car", "ticket to"],
+    eating: ["restaurant", "lunch", "dinner", "breakfast", "coffee", "cafe", "pizza", "burger", "takeaway", "eating out", "drinks"],
+    bills: ["bill", "electric", "water", "internet", "phone", "wifi", "utilit", "subscription", "insurance"],
+    health: ["pharmacy", "doctor", "medicine", "dentist", "hospital", "gym", "health"],
+    fun: ["movie", "cinema", "concert", "game", "clothes", "shoes", "shopping", "gift for", "book", "netflix", "spotify"],
+    savings: ["saving", "saved", "put aside", "set aside", "emergency fund"],
+    salary: ["salary", "paycheck", "wage", "payday"],
+    freelance: ["freelance", "client", "side job", "side income", "design job", "sold"],
+    gift: ["gift", "present"],
+  };
+  const INCOME_WORDS = ["earned", "got paid", "received", "income", "salary", "paycheck", "wage", "paid me", "refund", "sold", "bonus", "got "];
+  function parseEntry(text) {
+    const s = " " + text.toLowerCase().replace(/[“”"]/g, "") + " ";
+    const m = s.match(/(\d{1,3}(?:[,\s]\d{3})+(?:\.\d{1,2})?|\d+(?:[.,]\d{1,2})?)(\s*(k|thousand|million)\b)?/);
+    if (!m) return null;
+    const raw = /[,\s]\d{3}/.test(m[1]) ? m[1].replace(/[,\s]/g, "") : m[1].replace(",", ".");
+    const mult = !m[3] ? 1 : m[3] === "million" ? 1e6 : 1000;
+    const amount = Math.round(parseFloat(raw) * mult * 100) / 100;
+    if (!(amount > 0)) return null;
+    const spendWords = /\b(spent|spend|paid for|paid|bought|buy|cost|for)\b/;
+    let t = INCOME_WORDS.some(w => s.includes(w)) && !/\b(spent|bought|paid for)\b/.test(s) ? "income" : "expense";
+    if (t === "income" && /\bgot\b/.test(s) && !/\b(salary|paid|bonus|refund|income|money)\b/.test(s) && spendWords.test(s)) t = "expense";
+    const pool = t === "income" ? ["salary", "freelance", "gift"] : EXP_CATS.map(c => c.id);
+    let cat = pool.find(id => (KW[id] || []).some(k => s.includes(k))) || (t === "income" ? "other-in" : "other");
+    if (t === "expense" && cat === "other" && /\bgift\b/.test(s)) cat = "fun";
+    const d = new Date();
+    if (/\byesterday\b/.test(s)) d.setDate(d.getDate() - 1);
+    const date = d.getFullYear() + "-" + pad(d.getMonth() + 1) + "-" + pad(d.getDate());
+    const hit = m[0].trim(), at = text.toLowerCase().indexOf(hit);
+    let note = (at >= 0 ? text.slice(0, at) + " " + text.slice(at + hit.length) : text)
+      .replace(/\b(i |I )?(spent|spend|paid for|paid|bought|got paid|got|earned|received|cost|on|for|of|yesterday|today|dollars?|euros?|pounds?|dinars?|dirhams?|riyals?|bucks|usd|eur|gbp|tnd|mad|aed|sar|cad|iqd)\b/gi, " ")
+      .replace(/[$€£]/g, "").replace(/\s+/g, " ").trim();
+    note = note ? note[0].toUpperCase() + note.slice(1) : catOf(cat).name;
+    return { type: t, cat, amount, date, note };
+  }
+  function quickAdd(text) {
+    const msg = $("quickMsg");
+    const e = parseEntry(text || "");
+    if (!e) { msg.className = "small bad"; msg.textContent = "I couldn't find an amount. Try “spent 25 on groceries”."; return; }
+    state.tx.push({ id: uid(), ...e });
+    save();
+    const d = new Date(e.date + "T00:00:00"); view = new Date(d.getFullYear(), d.getMonth(), 1);
+    render();
+    $("quick").value = "";
+    msg.className = "small ok";
+    msg.textContent = "Added: " + e.note + ", " + catOf(e.cat).name + ", " + (e.type === "income" ? "+" : "−") + money(e.amount) + ". Wrong? Tap × on it below.";
+  }
+  $("quickForm").onsubmit = ev => { ev.preventDefault(); quickAdd($("quick").value); };
+
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  let rec = null, listening = false;
+  function micFallback(reason) {
+    const msg = $("quickMsg");
+    msg.className = "small";
+    msg.textContent = (reason || "Voice isn't available here.") + " Tap the box and use the mic on your phone's keyboard instead.";
+    $("quick").focus();
+  }
+  $("mic").onclick = () => {
+    if (!SR) return micFallback();
+    if (listening && rec) { rec.stop(); return; }
+    try {
+      rec = new SR();
+      rec.lang = navigator.language || "en-US";
+      rec.interimResults = true;
+      rec.maxAlternatives = 1;
+      let finalText = "";
+      rec.onstart = () => { listening = true; $("mic").classList.add("on"); $("quickMsg").className = "small"; $("quickMsg").textContent = "Listening…"; };
+      rec.onresult = ev => {
+        let txt = "";
+        for (const r of ev.results) { txt += r[0].transcript; if (r.isFinal) finalText = txt; }
+        $("quick").value = txt;
+      };
+      rec.onerror = ev => {
+        listening = false; $("mic").classList.remove("on");
+        if (ev.error === "not-allowed" || ev.error === "service-not-allowed") micFallback("The microphone is blocked here.");
+        else if (ev.error === "no-speech") { $("quickMsg").className = "small"; $("quickMsg").textContent = "I didn't hear anything. Tap the mic and try again."; }
+        else micFallback();
+      };
+      rec.onend = () => {
+        const wasListening = listening;
+        listening = false; $("mic").classList.remove("on");
+        const said = finalText || $("quick").value;
+        if (wasListening && said.trim()) quickAdd(said);
+      };
+      rec.start();
+    } catch (err) { listening = false; $("mic").classList.remove("on"); micFallback(); }
+  };
+
+  $("date").value = todayStr();
+  setType("expense");
+  render();
+})();
+</script>
+</body>
+</html>

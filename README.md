@@ -15,3 +15,9 @@ Your data is saved in your browser on this device (nothing is sent anywhere).
 ## Use it
 
 Open `index.html` in any browser. No install needed.
+
+## Android app
+
+Every update to `main` builds a new Android app automatically.
+On your phone, open the [latest download](../../releases/latest), tap **PocketLedger.apk**, and install it.
+Android will ask you to allow installing apps from your browser the first time.
