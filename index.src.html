@@ -5,33 +5,33 @@
 <style>
 /* Layout: one column on phones, a two-column ledger (entries left, debts, goals + charts right) on wide screens. */
 :root {
-  --bg: #f3f6f5;
+  --bg: #ffffff;
   --surface: #ffffff;
-  --fg: #16201d;
-  --muted: #5d6b66;
-  --line: #dbe3e0;
+  --fg: #1a1c1b;
+  --muted: #6b706e;
+  --line: #e6e8e7;
   --accent: #0f6b5c;
-  --accent-soft: #dcefe9;
+  --accent-soft: #e6f2ee;
   --income: #1f7a4d;
   --expense: #b2452f;
   --warn: #b7791f;
   --c1: #0f6b5c; --c2: #d08a2e; --c3: #5872c4; --c4: #b2452f; --c5: #8a5aa8; --c6: #3e9bb3; --c7: #7a8a3a; --c8: #a0627a; --c9: #2f8f6f; --c10: #6b6f86;
-  --side: #e8eeec; --side-fg: #16201d; --side-muted: #5d6b66; --side-hover: rgba(15,107,92,.08); --side-active: #d6e4df; --surface-dim: rgba(255,255,255,.35);
+  --side: #f7f7f6; --side-fg: #1a1c1b; --side-muted: #6b706e; --side-hover: rgba(0,0,0,.045); --side-active: #ebeceb; --field: #f6f7f6; --surface-dim: rgba(255,255,255,.35);
   --display: "Bricolage Grotesque", "Segoe UI", system-ui, sans-serif;
   --body: "Public Sans", "Segoe UI", system-ui, sans-serif;
   --mono: "JetBrains Mono", ui-monospace, "SF Mono", Menlo, monospace;
 }
 @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
-  --bg: #0f1513; --surface: #17201d; --fg: #e4ece9; --muted: #93a39d; --line: #2a3632;
-  --accent: #4fc3a8; --accent-soft: #1c3a33; --income: #5fcf91; --expense: #f0876f; --warn: #e8b45a;
+  --bg: #1c1d1d; --surface: #262827; --fg: #ececea; --muted: #a2a6a4; --line: #353837; --field: #2d302f;
+  --accent: #4fc3a8; --accent-soft: #1f3a33; --income: #5fcf91; --expense: #f0876f; --warn: #e8b45a;
   --c1: #4fc3a8; --c2: #e8a94f; --c3: #8ea3ec; --c4: #f0876f; --c5: #c39ae0; --c6: #6cc6dd; --c7: #b5c46a; --c8: #e09ab4; --c9: #7fd6b0; --c10: #b3b7cf;
-  --side: #0b100e; --side-fg: #e4ece9; --side-muted: #93a39d; --side-hover: rgba(255,255,255,.06); --side-active: #1f2b27;
+  --side: #141515; --side-fg: #ececea; --side-muted: #a2a6a4; --side-hover: rgba(255,255,255,.06); --side-active: #2a2c2b;
   color-scheme: dark; } }
 :root[data-theme="dark"] {
-  --bg: #0f1513; --surface: #17201d; --fg: #e4ece9; --muted: #93a39d; --line: #2a3632;
-  --accent: #4fc3a8; --accent-soft: #1c3a33; --income: #5fcf91; --expense: #f0876f; --warn: #e8b45a;
+  --bg: #1c1d1d; --surface: #262827; --fg: #ececea; --muted: #a2a6a4; --line: #353837; --field: #2d302f;
+  --accent: #4fc3a8; --accent-soft: #1f3a33; --income: #5fcf91; --expense: #f0876f; --warn: #e8b45a;
   --c1: #4fc3a8; --c2: #e8a94f; --c3: #8ea3ec; --c4: #f0876f; --c5: #c39ae0; --c6: #6cc6dd; --c7: #b5c46a; --c8: #e09ab4; --c9: #7fd6b0; --c10: #b3b7cf;
-  --side: #0b100e; --side-fg: #e4ece9; --side-muted: #93a39d; --side-hover: rgba(255,255,255,.06); --side-active: #1f2b27;
+  --side: #141515; --side-fg: #ececea; --side-muted: #a2a6a4; --side-hover: rgba(255,255,255,.06); --side-active: #2a2c2b;
   color-scheme: dark;
 }
 * { box-sizing: border-box; }
@@ -132,7 +132,7 @@ select { border: 1px solid var(--line); background: var(--surface); border-radiu
 
 form.add { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 10px; }
 form.add .f { display: grid; gap: 4px; min-width: 0; }
-form.add input, form.add select { width: 100%; border: 1px solid var(--line); background: var(--bg); border-radius: 8px; padding: 8px 10px; }
+form.add input, form.add select { width: 100%; border: 1px solid var(--line); background: var(--field); border-radius: 8px; padding: 8px 10px; }
 .f-type { grid-column: span 6; } .f-amt { grid-column: span 2; } .f-cat { grid-column: span 2; } .f-date { grid-column: span 2; } .f-note { grid-column: span 4; } .f-go { grid-column: span 2; align-self: end; }
 @media (max-width: 520px) { .f-amt, .f-cat, .f-date { grid-column: span 3; } .f-date { grid-column: span 6; } .f-note, .f-go { grid-column: span 6; } }
 .seg { display: inline-flex; border: 1px solid var(--line); border-radius: 8px; overflow: hidden; width: fit-content; }
@@ -143,7 +143,7 @@ form.add input, form.add select { width: 100%; border: 1px solid var(--line); ba
 .primary:hover { filter: brightness(1.08); }
 .quick { display: grid; gap: 6px; }
 .quick-row { display: flex; gap: 8px; align-items: center; }
-.quick-row input { flex: 1; min-width: 0; border: 1px solid var(--line); background: var(--bg); border-radius: 8px; padding: 9px 12px; }
+.quick-row input { flex: 1; min-width: 0; border: 1px solid var(--line); background: var(--field); border-radius: 8px; padding: 9px 12px; }
 .mic { flex: none; width: 44px; height: 44px; border-radius: 50%; border: 0; background: var(--accent); color: var(--surface); display: grid; place-items: center; }
 .mic.on { background: var(--expense); animation: pulse 1.2s ease-in-out infinite; }
 @keyframes pulse { 50% { box-shadow: 0 0 0 8px var(--accent-soft); } }
@@ -152,10 +152,10 @@ form.add input, form.add select { width: 100%; border: 1px solid var(--line); ba
 .or { display: flex; align-items: center; gap: 10px; color: var(--muted); font-size: 0.8rem; }
 .or::before, .or::after { content: ""; flex: 1; height: 1px; background: var(--line); }
 .debt-add { display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr) auto; gap: 8px; align-items: end; }
-.debt-add input { width: 100%; border: 1px solid var(--line); background: var(--bg); border-radius: 8px; padding: 8px 10px; }
+.debt-add input { width: 100%; border: 1px solid var(--line); background: var(--field); border-radius: 8px; padding: 8px 10px; }
 @media (max-width: 420px) { .debt-add { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); } .debt-add .primary { grid-column: 1 / -1; } }
 .debt-totals { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-.debt-totals div { background: var(--bg); border-radius: 10px; padding: 10px 12px; display: grid; gap: 2px; }
+.debt-totals div { background: var(--field); border-radius: 10px; padding: 10px 12px; display: grid; gap: 2px; }
 .debt-totals .num { font-size: 1.15rem; }
 .debts { list-style: none; margin: 0; padding: 0; display: grid; }
 .debts li { display: grid; gap: 6px; padding: 12px 0; border-top: 1px solid var(--line); }
@@ -167,7 +167,7 @@ form.add input, form.add select { width: 100%; border: 1px solid var(--line); ba
 .debts .acts { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
 .debts .acts button { font-size: 0.85rem; padding: 5px 10px; }
 .debts .payrow { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
-.debts .payrow input { width: 8em; border: 1px solid var(--line); background: var(--bg); border-radius: 6px; padding: 5px 8px; font-family: var(--mono); }
+.debts .payrow input { width: 8em; border: 1px solid var(--line); background: var(--field); border-radius: 6px; padding: 5px 8px; font-family: var(--mono); }
 .debts li.closed { opacity: 0.6; }
 .filters { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
 .filters .seg button { padding: 6px 12px; }
@@ -181,12 +181,12 @@ form.add input, form.add select { width: 100%; border: 1px solid var(--line); ba
 .goals .meter i { background: var(--c9); }
 .goals .acts { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
 .goals .acts button { font-size: 0.85rem; padding: 5px 10px; }
-.goals .acts input { width: 8em; border: 1px solid var(--line); background: var(--bg); border-radius: 6px; padding: 5px 8px; font-family: var(--mono); }
+.goals .acts input { width: 8em; border: 1px solid var(--line); background: var(--field); border-radius: 6px; padding: 5px 8px; font-family: var(--mono); }
 .pill.reached { background: var(--c9); color: var(--surface); }
 .setting { display: grid; gap: 8px; padding-top: 12px; border-top: 1px solid var(--line); }
 .panel-head + .setting { border-top: 0; padding-top: 0; }
 .setting .row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
-.setting input[type=password], .setting input[type=time] { border: 1px solid var(--line); background: var(--bg); border-radius: 8px; padding: 7px 10px; font-family: var(--mono); width: 9em; }
+.setting input[type=password], .setting input[type=time] { border: 1px solid var(--line); background: var(--field); border-radius: 8px; padding: 7px 10px; font-family: var(--mono); width: 9em; }
 .switch { display: flex; gap: 8px; align-items: center; font-weight: 500; }
 .switch input { width: 18px; height: 18px; accent-color: var(--accent); }
 #setMsg.ok { color: var(--income); } #setMsg.bad { color: var(--expense); }
@@ -378,6 +378,15 @@ svg text { fill: var(--muted); font-family: var(--mono); font-size: 10px; }
 
     <section class="page" data-page="app-settings" hidden>
       <section class="panel">
+        <div class="panel-head"><h2>Appearance</h2></div>
+        <div class="seg" role="group" aria-label="Theme" id="themeSeg">
+          <button type="button" class="a" data-theme-opt="light" aria-pressed="true">Light</button>
+          <button type="button" class="a" data-theme-opt="dark" aria-pressed="false">Dark</button>
+          <button type="button" class="a" data-theme-opt="auto" aria-pressed="false">Same as phone</button>
+        </div>
+      </section>
+
+      <section class="panel">
         <div class="panel-head"><h2>Currency</h2></div>
         <select id="currency" aria-label="Currency" style="width:fit-content">
           <option value="USD">$ US dollar</option><option value="IQD">IQD Iraqi dinar</option>
@@ -390,7 +399,7 @@ svg text { fill: var(--muted); font-family: var(--mono); font-size: 10px; }
         <p class="small" style="margin:0"><b>Free:</b> a Google Gemini key from <a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener">aistudio.google.com/apikey</a> (Create API key, then Copy key). <b>Paid:</b> a Claude key from <a href="https://console.anthropic.com/settings/keys" target="_blank" rel="noopener">console.anthropic.com</a> (starts with sk-ant-).</p>
         <span class="small" id="aiState"></span>
         <div class="row data-row" id="aiKeyRow">
-          <input type="password" id="aiKeyIn" placeholder="Paste your Gemini or Claude key" autocomplete="off" style="flex:1;min-width:0;border:1px solid var(--line);background:var(--bg);border-radius:8px;padding:8px 10px">
+          <input type="password" id="aiKeyIn" placeholder="Paste your Gemini or Claude key" autocomplete="off" style="flex:1;min-width:0;border:1px solid var(--line);background:var(--field);border-radius:8px;padding:8px 10px">
           <button class="primary" type="button" id="aiKeySave" style="width:auto">Turn on</button>
         </div>
         <button class="ghost" type="button" id="aiKeyOff" hidden style="width:fit-content">Turn off and remove key</button>
@@ -430,6 +439,26 @@ svg text { fill: var(--muted); font-family: var(--mono); font-size: 10px; }
 
 <script>
 (() => {
+  // ---- theme ----
+  const THEME_KEY = "pocket-ledger-theme", hostTheme = document.documentElement.getAttribute("data-theme");
+  let themePref = "light"; try { themePref = localStorage.getItem(THEME_KEY) || "light"; } catch (e) {}
+  function applyTheme() {
+    const r = document.documentElement;
+    if (themePref === "auto") { hostTheme ? r.setAttribute("data-theme", hostTheme) : r.removeAttribute("data-theme"); }
+    else r.setAttribute("data-theme", themePref);
+    const dark = themePref === "dark" || (themePref === "auto" && (hostTheme ? hostTheme === "dark" : matchMedia("(prefers-color-scheme: dark)").matches));
+    let m = document.querySelector('meta[name="theme-color"]');
+    if (!m) { m = document.createElement("meta"); m.name = "theme-color"; document.head.appendChild(m); }
+    m.content = dark ? "#1c1d1d" : "#ffffff";
+    document.querySelectorAll("[data-theme-opt]").forEach(b => b.setAttribute("aria-pressed", b.dataset.themeOpt === themePref));
+  }
+  applyTheme();
+  document.addEventListener("click", e => {
+    const b = e.target.closest("[data-theme-opt]"); if (!b) return;
+    themePref = b.dataset.themeOpt; try { localStorage.setItem(THEME_KEY, themePref); } catch (e2) {}
+    applyTheme();
+  });
+  try { matchMedia("(prefers-color-scheme: dark)").addEventListener("change", () => { if (themePref === "auto") applyTheme(); }); } catch (e) {}
   const EXP_CATS = [
     { id: "housing", name: "Housing", color: "--c1" },
     { id: "groceries", name: "Groceries", color: "--c2" },
