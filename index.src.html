@@ -138,6 +138,8 @@ form.add input, form.add select { width: 100%; border: 1px solid var(--line); ba
 .switch { display: flex; gap: 8px; align-items: center; font-weight: 500; }
 .switch input { width: 18px; height: 18px; accent-color: var(--accent); }
 #setMsg.ok { color: var(--income); } #setMsg.bad { color: var(--expense); }
+.ai-badge { font-size: 0.8rem; font-weight: 600; color: var(--accent); }
+#aiMsg.ok { color: var(--income); } #aiMsg.bad { color: var(--expense); }
 .err { color: var(--expense); font-size: 0.85rem; min-height: 1.2em; margin: -4px 0 0; }
 
 .list { list-style: none; margin: 0; padding: 0; display: grid; }
@@ -220,8 +222,9 @@ svg text { fill: var(--muted); font-family: var(--mono); font-size: 10px; }
               <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path fill="currentColor" d="M12 14a3 3 0 0 0 3-3V5a3 3 0 0 0-6 0v6a3 3 0 0 0 3 3Zm5-3a5 5 0 0 1-10 0H5a7 7 0 0 0 6 6.92V21h2v-3.08A7 7 0 0 0 19 11h-2Z"/></svg>
             </button>
             <input id="quick" placeholder="Spent 25 on groceries yesterday" autocomplete="off" enterkeyhint="done">
-            <button class="primary" type="submit" style="width:auto">Add</button>
+            <button class="primary" type="submit" style="width:auto" id="quickGo">Add</button>
           </div>
+          <span class="ai-badge" id="aiBadge" hidden>✦ Smart voice on: say anything, even several things at once</span>
           <p class="small" id="quickMsg">Tap the mic and say something like “paid 40 for taxi” or “got 3200 salary”.</p>
         </form>
         <div class="or"><span>or fill in the details</span></div>
@@ -300,6 +303,18 @@ svg text { fill: var(--muted); font-family: var(--mono); font-size: 10px; }
         <div class="panel-head"><h2>Last 6 months</h2>
           <span class="small"><span class="in">■</span> income &nbsp;<span class="out">■</span> spent</span></div>
         <div class="chart-box"><svg id="bars" viewBox="0 0 420 200" width="100%" role="img" aria-label="Income and spending over the last six months"></svg></div>
+      </section>
+
+      <section class="panel" id="aiKeyPanel">
+        <div class="panel-head"><h2>Smart voice</h2></div>
+        <p class="small" style="margin:0">Let Claude understand what you say, in any language and with several things at once, like “taxi 5,000 and lunch 12,000, and Ali paid me back”. It uses your own Claude key, which costs a tiny amount per sentence and stays on this device.</p>
+        <span class="small" id="aiState"></span>
+        <div class="row data-row" id="aiKeyRow">
+          <input type="password" id="aiKeyIn" placeholder="Paste your Claude key (sk-ant-…)" autocomplete="off" style="flex:1;min-width:0;border:1px solid var(--line);background:var(--bg);border-radius:8px;padding:8px 10px">
+          <button class="primary" type="button" id="aiKeySave" style="width:auto">Turn on</button>
+        </div>
+        <button class="ghost" type="button" id="aiKeyOff" hidden style="width:fit-content">Turn off and remove key</button>
+        <p class="small" id="aiMsg" role="status" style="margin:0"></p>
       </section>
 
       <section class="panel">
@@ -728,7 +743,7 @@ svg text { fill: var(--muted); font-family: var(--mono); font-size: 10px; }
     note = note ? note[0].toUpperCase() + note.slice(1) : catOf(cat).name;
     return { type: t, cat, amount, date, note };
   }
-  function quickAdd(text) {
+  function localQuickAdd(text) {
     const msg = $("quickMsg");
     const dd = parseDebt(text || "");
     if (dd) {
@@ -748,7 +763,105 @@ svg text { fill: var(--muted); font-family: var(--mono); font-size: 10px; }
     msg.className = "small ok";
     msg.textContent = "Added: " + e.note + ", " + catOf(e.cat).name + ", " + (e.type === "income" ? "+" : "−") + money(e.amount) + ". Wrong? Tap × on it below.";
   }
+  // ---- AI understanding (Claude) ----
+  const AI_KEY = "pocket-ledger-ai-key";
+  let aiKey = ""; try { aiKey = localStorage.getItem(AI_KEY) || ""; } catch (e) {}
+  let sampleFn = null, aiBusy = false;
+  if (window.claude && window.claude.use) window.claude.use("sample").then(f => { sampleFn = f; renderAi(); }).catch(() => {});
+  const aiMode = () => sampleFn ? "claude" : aiKey ? "key" : "";
+  function renderAi() {
+    const mode = aiMode();
+    $("aiBadge").hidden = !mode;
+    $("aiKeyPanel").hidden = !!sampleFn;
+    $("aiState").textContent = aiKey ? "On. Your sentences are understood by Claude." : "Off. The app uses its simple built-in understanding.";
+    $("aiKeyRow").hidden = !!aiKey; $("aiKeyOff").hidden = !aiKey;
+  }
+  function aiPrompt(text) {
+    const today = todayStr();
+    return `You turn what a person said into actions for their personal finance app. Today is ${today} (${new Date().toLocaleDateString("en-US", { weekday: "long" })}). Currency: ${state.currency}.
+Expense categories (id: name): ${EXP_CATS.map(c => c.id + ": " + c.name).join(", ")}.
+Income categories (id: name): ${INC_CATS.map(c => c.id + ": " + c.name).join(", ")}.
+Open debts: ${JSON.stringify(state.debts.filter(d => d.paid < d.amount).map(d => ({ who: d.who, dir: d.dir, left: d.amount - d.paid })))}.
+Savings goals: ${JSON.stringify(state.goals.map(g => ({ name: g.name, saved: g.saved, target: g.target })))}.
+
+The person said (any language, may be speech-to-text with mistakes): """${text}"""
+
+Reply with ONLY a JSON object: {"actions": [...], "reply": "one short sentence in the person's language saying what you recorded, or asking what they meant"}.
+Action shapes:
+- {"do":"add_entry","type":"expense"|"income","cat":"<category id>","amount":number,"date":"YYYY-MM-DD","note":"short label, e.g. Taxi"}
+- {"do":"add_debt","dir":"owe"|"owed","who":"name","amount":number}   (owe = the person owes someone; owed = someone owes the person)
+- {"do":"pay_debt","who":"name from open debts","amount":number|null}   (null = paid in full; repayments of existing debts go here, not add_entry)
+- {"do":"add_goal","name":"goal name","target":number}
+- {"do":"save_to_goal","goal":"name from savings goals","amount":number}
+Rules: amounts are plain numbers ("25k" = 25000, "2 million" = 2000000). Resolve "yesterday", weekdays etc. to dates on or before today. Money moved to savings with no goal named is an add_entry with cat "savings". If there is no amount or the meaning is unclear, return no actions and ask in "reply". Never invent amounts.`;
+  }
+  async function askAi(text) {
+    const prompt = aiPrompt(text);
+    if (sampleFn) return await sampleFn.json(prompt, { modelTier: "quick" });
+    const r = await fetch("https://api.anthropic.com/v1/messages", {
+      method: "POST",
+      headers: { "content-type": "application/json", "x-api-key": aiKey, "anthropic-version": "2023-06-01", "anthropic-dangerous-direct-browser-access": "true" },
+      body: JSON.stringify({ model: "claude-haiku-5-5", max_tokens: 800, messages: [{ role: "user", content: prompt }] }),
+    });
+    if (!r.ok) { const err = new Error("http " + r.status); err.status = r.status; throw err; }
+    const data = await r.json();
+    const out = (data.content || []).map(c => c.text || "").join("");
+    const m = out.match(/\{[\s\S]*\}/); if (!m) throw new Error("no json");
+    return JSON.parse(m[0]);
+  }
+  const findByName = (list, key, name) => { const n = String(name || "").trim().toLowerCase(); return list.find(x => x[key].toLowerCase() === n) || list.find(x => x[key].toLowerCase().includes(n) || n.includes(x[key].toLowerCase())); };
+  function applyActions(actions) {
+    const done = []; let lastDate = null;
+    for (const a of Array.isArray(actions) ? actions : []) {
+      const amount = Math.round(Number(a.amount) * 100) / 100;
+      if (a.do === "add_entry" && amount > 0 && (a.type === "expense" || a.type === "income")) {
+        const cats = a.type === "income" ? INC_CATS : EXP_CATS;
+        const cat = cats.some(c => c.id === a.cat) ? a.cat : (a.type === "income" ? "other-in" : "other");
+        const date = /^\d{4}-\d{2}-\d{2}$/.test(a.date || "") && a.date <= todayStr() ? a.date : todayStr();
+        state.tx.push({ id: uid(), type: a.type, cat, amount, note: String(a.note || catOf(cat).name).slice(0, 80), date });
+        lastDate = date; done.push(1);
+      } else if (a.do === "add_debt" && amount > 0 && a.who && (a.dir === "owe" || a.dir === "owed")) {
+        state.debts.push({ id: uid(), dir: a.dir, who: String(a.who).slice(0, 40), amount, paid: 0, date: todayStr() }); done.push(1);
+      } else if (a.do === "pay_debt") {
+        const d = findByName(state.debts.filter(x => x.paid < x.amount), "who", a.who);
+        if (d) { payDebt(d, a.amount == null ? d.amount - d.paid : amount); done.push(1); }
+      } else if (a.do === "add_goal" && Number(a.target) > 0 && a.name) {
+        state.goals.push({ id: uid(), name: String(a.name).slice(0, 40), target: Math.round(Number(a.target) * 100) / 100, saved: 0 }); done.push(1);
+      } else if (a.do === "save_to_goal" && amount > 0) {
+        const g = findByName(state.goals, "name", a.goal);
+        if (g) { g.saved = Math.round((g.saved + amount) * 100) / 100; state.tx.push({ id: uid(), type: "expense", cat: "savings", amount, note: "Saved for " + g.name, date: todayStr() }); lastDate = todayStr(); done.push(1); }
+      }
+    }
+    if (done.length) { save(); if (lastDate) { const d = new Date(lastDate + "T00:00:00"); view = new Date(d.getFullYear(), d.getMonth(), 1); } render(); }
+    return done.length;
+  }
+  async function quickAdd(text) {
+    text = (text || "").trim(); if (!text) return;
+    const msg = $("quickMsg");
+    if (!aiMode() || aiBusy) return localQuickAdd(text);
+    aiBusy = true; $("quickGo").disabled = true;
+    msg.className = "small"; msg.textContent = "Understanding…";
+    try {
+      const res = await askAi(text);
+      const n = applyActions(res && res.actions);
+      if (n) $("quick").value = "";
+      msg.className = "small " + (n ? "ok" : "bad");
+      msg.textContent = (res && res.reply ? res.reply : n ? "Saved." : "I didn't catch an amount. Try again.") + (n ? " Wrong? Edit or delete it below." : "");
+    } catch (e) {
+      if (e && (e.status === 401 || e.status === 403)) { localQuickAdd(text); msg.textContent += " (Your Claude key didn't work, so the simple mode was used. Check it in Smart voice.)"; }
+      else if (e && e.code === "not_granted") { sampleFn = null; renderAi(); localQuickAdd(text); }
+      else { localQuickAdd(text); if ($("quickMsg").className.includes("ok")) $("quickMsg").textContent += " (AI wasn't reachable, used the simple mode.)"; }
+    } finally { aiBusy = false; $("quickGo").disabled = false; }
+  }
   $("quickForm").onsubmit = ev => { ev.preventDefault(); quickAdd($("quick").value); };
+  $("aiKeySave").onclick = () => {
+    const k = $("aiKeyIn").value.trim();
+    if (!/^sk-ant-/.test(k)) { $("aiMsg").className = "small bad"; $("aiMsg").textContent = "That doesn't look like a Claude key. It starts with sk-ant-."; return; }
+    aiKey = k; try { localStorage.setItem(AI_KEY, k); } catch (e) {}
+    $("aiKeyIn").value = ""; $("aiMsg").className = "small ok"; $("aiMsg").textContent = "Smart voice is on."; renderAi();
+  };
+  $("aiKeyOff").onclick = () => { aiKey = ""; try { localStorage.removeItem(AI_KEY); } catch (e) {} $("aiMsg").className = "small ok"; $("aiMsg").textContent = "Smart voice is off and your key was removed from this device."; renderAi(); };
+  renderAi();
 
   const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
   let rec = null, listening = false;
