@@ -903,11 +903,16 @@ Action shapes:
 - {"do":"save_to_goal","goal":"name from savings goals","amount":number}
 Rules: amounts are plain numbers ("25k" = 25000, "2 million" = 2000000). Resolve "yesterday", weekdays etc. to dates on or before today. Money moved to savings with no goal named is an add_entry with cat "savings". If there is no amount or the meaning is unclear, return no actions and ask in "reply". Never invent amounts.`;
   }
+  async function fetchT(url, opts, ms = 12000) {
+    const ac = new AbortController(), t = setTimeout(() => ac.abort(), ms);
+    try { return await fetch(url, { ...opts, signal: ac.signal }); } finally { clearTimeout(t); }
+  }
+  const withTimeout = (p, ms = 15000) => Promise.race([p, new Promise((_, rej) => setTimeout(() => rej(new Error("timeout")), ms))]);
   async function askAi(text) {
     const prompt = aiPrompt(text);
     if (sampleFn) return await sampleFn.json(prompt, { modelTier: "quick" });
     if (!/^sk-ant-/.test(aiKey)) return await askGemini(prompt);
-    const r = await fetch("https://api.anthropic.com/v1/messages", {
+    const r = await fetchT("https://api.anthropic.com/v1/messages", {
       method: "POST",
       headers: { "content-type": "application/json", "x-api-key": aiKey, "anthropic-version": "2023-06-01", "anthropic-dangerous-direct-browser-access": "true" },
       body: JSON.stringify({ model: "claude-haiku-5-5", max_tokens: 800, messages: [{ role: "user", content: prompt }] }),
@@ -921,7 +926,7 @@ Rules: amounts are plain numbers ("25k" = 25000, "2 million" = 2000000). Resolve
   async function askGemini(prompt) {
     let lastErr;
     for (const model of ["gemini-flash-latest", "gemini-2.5-flash"]) {
-      const r = await fetch("https://generativelanguage.googleapis.com/v1beta/models/" + model + ":generateContent", {
+      const r = await fetchT("https://generativelanguage.googleapis.com/v1beta/models/" + model + ":generateContent", {
         method: "POST",
         headers: { "content-type": "application/json", "x-goog-api-key": aiKey },
         body: JSON.stringify({ contents: [{ role: "user", parts: [{ text: prompt }] }], generationConfig: { responseMimeType: "application/json", temperature: 0 } }),
@@ -968,7 +973,7 @@ Rules: amounts are plain numbers ("25k" = 25000, "2 million" = 2000000). Resolve
     aiBusy = true; $("quickGo").disabled = true;
     msg.className = "small"; msg.textContent = "Understanding…";
     try {
-      const res = await askAi(text);
+      const res = await withTimeout(askAi(text));
       const n = applyActions(res && res.actions);
       if (n) $("quick").value = "";
       msg.className = "small " + (n ? "ok" : "bad");
@@ -1040,7 +1045,9 @@ Rules: amounts are plain numbers ("25k" = 25000, "2 million" = 2000000). Resolve
   const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
   let rec = null, listening = false;
   function micFallback(reason) {
-    addMsg("app", (reason || "Voice isn't available here.") + " Tap the message box and use the mic on your phone's keyboard instead.");
+    const t = (reason || "Voice isn't available here.") + " Tap the message box and use the mic on your phone's keyboard instead.";
+    const last = chat[chat.length - 1];
+    if (!last || last.text !== t) addMsg("app", t);
     $("quick").focus();
   }
   async function nativeListen() {
