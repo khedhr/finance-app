@@ -232,6 +232,7 @@ svg text { fill: var(--muted); font-family: var(--mono); font-size: 10px; }
       <button class="iconbtn plain" id="sideClose" aria-label="Close menu"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
     </div>
     <nav class="side-nav">
+    <button class="nav" type="button" id="newChat"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg><span>New chat</span></button>
       <a class="nav" href="#chat" data-nav="chat"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h16v11H8l-4 4V5z"/></svg><span>Chat</span></a>
       <a class="nav" href="#entries" data-nav="entries"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 6h12M8 12h12M8 18h12M4 6h.01M4 12h.01M4 18h.01"/></svg><span>Entries</span></a>
       <a class="nav" href="#debts" data-nav="debts"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 7h11l-3-3M17 17H6l3 3"/></svg><span>Debts</span></a>
@@ -1011,6 +1012,7 @@ Rules: amounts are plain numbers ("25k" = 25000, "2 million" = 2000000). Resolve
     addMsg("app", msg.textContent || "Done.", msg.className.includes("bad"));
   }
   $("quickForm").onsubmit = ev => { ev.preventDefault(); sendChat($("quick").value); };
+  $("newChat").onclick = () => { chat = []; saveChat(); drawChat(); go("chat"); };
   $("chips").onclick = e => { const c = e.target.closest(".chip"); if (c) { $("quick").value = c.textContent; $("quick").focus(); } };
 
 
