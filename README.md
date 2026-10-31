@@ -20,7 +20,13 @@ Your data is saved in your browser on this device (nothing is sent anywhere).
 
 ## Use it
 
-Open `index.html` in any browser. No install needed.
+Open https://khedhr.github.io/finance-app/ in any browser.
+
+**iPhone:** open that link in Safari, tap the Share button, then **Add to Home Screen**.
+
+## Making changes
+
+Edit `index.src.html`, then run `./build.sh` to update `index.html` and `www/index.html`.
 
 ## Android app
 
