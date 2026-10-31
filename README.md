@@ -11,7 +11,7 @@ A simple personal finance app that runs in your browser.
 - Track debts: what you owe and what people owe you, with partial payments
 - Savings goals with progress bars
 - Monthly tips comparing you with last month
-- Search all entries
+- Filter entries by spending, income or category
 - App lock with PIN (and fingerprint on Android)
 - Daily reminder notification (Android)
 - Save a backup file and restore it later
