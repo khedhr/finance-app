@@ -320,10 +320,10 @@ svg text { fill: var(--muted); font-family: var(--mono); font-size: 10px; }
       <section class="panel" id="aiKeyPanel">
         <div class="panel-head"><h2>Smart voice</h2></div>
         <p class="small" style="margin:0">Let Claude understand what you say, in any language and with several things at once, like “taxi 5,000 and lunch 12,000, and Ali paid me back”. Paste a key below. It stays on this device.</p>
-        <p class="small" style="margin:0"><b>Free:</b> a Google Gemini key from <a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener">aistudio.google.com/apikey</a> (starts with AIza). <b>Paid:</b> a Claude key from <a href="https://console.anthropic.com/settings/keys" target="_blank" rel="noopener">console.anthropic.com</a> (starts with sk-ant-).</p>
+        <p class="small" style="margin:0"><b>Free:</b> a Google Gemini key from <a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener">aistudio.google.com/apikey</a> (Create API key, then Copy key). <b>Paid:</b> a Claude key from <a href="https://console.anthropic.com/settings/keys" target="_blank" rel="noopener">console.anthropic.com</a> (starts with sk-ant-).</p>
         <span class="small" id="aiState"></span>
         <div class="row data-row" id="aiKeyRow">
-          <input type="password" id="aiKeyIn" placeholder="Paste your key (AIza… or sk-ant-…)" autocomplete="off" style="flex:1;min-width:0;border:1px solid var(--line);background:var(--bg);border-radius:8px;padding:8px 10px">
+          <input type="password" id="aiKeyIn" placeholder="Paste your Gemini or Claude key" autocomplete="off" style="flex:1;min-width:0;border:1px solid var(--line);background:var(--bg);border-radius:8px;padding:8px 10px">
           <button class="primary" type="button" id="aiKeySave" style="width:auto">Turn on</button>
         </div>
         <button class="ghost" type="button" id="aiKeyOff" hidden style="width:fit-content">Turn off and remove key</button>
@@ -787,7 +787,7 @@ svg text { fill: var(--muted); font-family: var(--mono); font-size: 10px; }
     const mode = aiMode();
     $("aiBadge").hidden = !mode;
     $("aiKeyPanel").hidden = !!sampleFn;
-    $("aiState").textContent = aiKey ? "On. Your sentences are understood by " + (/^AIza/.test(aiKey) ? "Google Gemini." : "Claude.") : "Off. The app uses its simple built-in understanding.";
+    $("aiState").textContent = aiKey ? "On. Your sentences are understood by " + (/^sk-ant-/.test(aiKey) ? "Claude." : "Google Gemini.") : "Off. The app uses its simple built-in understanding.";
     $("aiKeyRow").hidden = !!aiKey; $("aiKeyOff").hidden = !aiKey;
   }
   function aiPrompt(text) {
@@ -812,7 +812,7 @@ Rules: amounts are plain numbers ("25k" = 25000, "2 million" = 2000000). Resolve
   async function askAi(text) {
     const prompt = aiPrompt(text);
     if (sampleFn) return await sampleFn.json(prompt, { modelTier: "quick" });
-    if (/^AIza/.test(aiKey)) return await askGemini(prompt);
+    if (!/^sk-ant-/.test(aiKey)) return await askGemini(prompt);
     const r = await fetch("https://api.anthropic.com/v1/messages", {
       method: "POST",
       headers: { "content-type": "application/json", "x-api-key": aiKey, "anthropic-version": "2023-06-01", "anthropic-dangerous-direct-browser-access": "true" },
@@ -888,7 +888,7 @@ Rules: amounts are plain numbers ("25k" = 25000, "2 million" = 2000000). Resolve
   $("quickForm").onsubmit = ev => { ev.preventDefault(); quickAdd($("quick").value); };
   $("aiKeySave").onclick = () => {
     const k = $("aiKeyIn").value.trim();
-    if (!/^(sk-ant-|AIza)/.test(k)) { $("aiMsg").className = "small bad"; $("aiMsg").textContent = "That doesn't look like a key. A Google key starts with AIza, a Claude key with sk-ant-."; return; }
+    if (k.length < 20 || /\s/.test(k)) { $("aiMsg").className = "small bad"; $("aiMsg").textContent = "That doesn't look like a full key. Copy it again with the Copy key button."; return; }
     aiKey = k; try { localStorage.setItem(AI_KEY, k); } catch (e) {}
     $("aiKeyIn").value = ""; $("aiMsg").className = "small ok"; $("aiMsg").textContent = "Smart voice is on."; renderAi();
   };
