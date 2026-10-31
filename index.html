@@ -37,6 +37,7 @@
   color-scheme: dark;
 }
 * { box-sizing: border-box; }
+[hidden] { display: none !important; }
 body { background: var(--bg); color: var(--fg); font-family: var(--body); font-size: 15px; line-height: 1.5; }
 .wrap { max-width: 1120px; margin: 0 auto; padding-block: 24px 48px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); display: grid; gap: 20px; }
 h1, h2 { font-family: var(--display); margin: 0; text-wrap: balance; }
@@ -97,7 +98,7 @@ form.add input, form.add select { width: 100%; border: 1px solid var(--line); ba
 .err { color: var(--expense); font-size: 0.85rem; min-height: 1.2em; margin: -4px 0 0; }
 
 .list { list-style: none; margin: 0; padding: 0; display: grid; }
-.list li { display: grid; grid-template-columns: 10px minmax(0, 1fr) auto auto; gap: 12px; align-items: center; padding: 10px 2px; border-top: 1px solid var(--line); }
+.list li { display: grid; grid-template-columns: 10px minmax(0, 1fr) auto auto auto; gap: 12px; align-items: center; padding: 10px 2px; border-top: 1px solid var(--line); }
 .list li:first-child { border-top: 0; }
 .dot { width: 10px; height: 10px; border-radius: 50%; }
 .what { min-width: 0; }
@@ -105,6 +106,16 @@ form.add input, form.add select { width: 100%; border: 1px solid var(--line); ba
 .what span { font-size: 0.8rem; color: var(--muted); }
 .del { border: 0; background: none; color: var(--muted); font-size: 1.1rem; padding: 4px 6px; border-radius: 6px; }
 .del:hover { color: var(--expense); background: var(--accent-soft); }
+.edit { border: 0; background: none; color: var(--muted); padding: 4px 6px; border-radius: 6px; display: grid; place-items: center; }
+.edit:hover { color: var(--accent); background: var(--accent-soft); }
+.list li.editing { background: var(--accent-soft); border-radius: 8px; }
+.ghost { background: transparent; border: 1px solid var(--line); border-radius: 8px; padding: 9px 14px; font-weight: 600; }
+.ghost:hover { border-color: var(--accent); color: var(--accent); }
+.go-row { display: flex; gap: 8px; } .go-row .primary { flex: 1; }
+.data-row { display: flex; flex-wrap: wrap; gap: 8px; }
+#dataMsg.ok { color: var(--income); } #dataMsg.bad { color: var(--expense); }
+.confirm { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; background: var(--accent-soft); border-radius: 8px; padding: 10px 12px; font-size: 0.9rem; }
+.danger { background: var(--expense); color: var(--surface); border: 0; border-radius: 8px; padding: 7px 12px; font-weight: 600; }
 .empty { color: var(--muted); padding: 18px 0; text-align: center; }
 
 .budgets { display: grid; gap: 12px; }
@@ -162,7 +173,7 @@ svg text { fill: var(--muted); font-family: var(--mono); font-size: 10px; }
   <div class="cols">
     <div style="display:grid;gap:20px;min-width:0">
       <section class="panel">
-        <h2>Add an entry</h2>
+        <h2 id="formTitle">Add an entry</h2>
         <form class="quick" id="quickForm" novalidate>
           <label class="label" for="quick">Say it or type it</label>
           <div class="quick-row">
@@ -186,7 +197,7 @@ svg text { fill: var(--muted); font-family: var(--mono); font-size: 10px; }
           <label class="f f-cat"><span class="label">Category</span><select id="cat"></select></label>
           <label class="f f-date"><span class="label">Date</span><input id="date" type="date"></label>
           <label class="f f-note"><span class="label">Note</span><input id="note" placeholder="e.g. Weekly groceries" maxlength="80" autocomplete="off"></label>
-          <div class="f f-go"><button class="primary" type="submit">Add</button></div>
+          <div class="f f-go"><div class="go-row"><button class="primary" type="submit" id="saveBtn">Add</button><button class="ghost" type="button" id="cancelEdit" hidden>Cancel</button></div></div>
         </form>
         <p class="err" id="err" role="alert"></p>
       </section>
@@ -217,6 +228,22 @@ svg text { fill: var(--muted); font-family: var(--mono); font-size: 10px; }
         <div class="panel-head"><h2>Last 6 months</h2>
           <span class="small"><span class="in">■</span> income &nbsp;<span class="out">■</span> spent</span></div>
         <div class="chart-box"><svg id="bars" viewBox="0 0 420 200" width="100%" role="img" aria-label="Income and spending over the last six months"></svg></div>
+      </section>
+
+      <section class="panel">
+        <div class="panel-head"><h2>Backup</h2></div>
+        <p class="small" style="margin:0">Your entries are kept only on this device. Save a backup now and then, for example to Google Drive or your messages, so you never lose them.</p>
+        <div class="data-row">
+          <button class="primary" type="button" id="backupBtn" style="width:auto">Save backup</button>
+          <button class="ghost" type="button" id="restoreBtn">Restore from backup</button>
+          <input type="file" id="restoreFile" accept="application/json,.json,text/plain" hidden>
+        </div>
+        <div class="confirm" id="restoreConfirm" hidden>
+          <span id="restoreText"></span>
+          <button class="danger" type="button" id="restoreYes">Replace my data</button>
+          <button class="ghost" type="button" id="restoreNo">Cancel</button>
+        </div>
+        <p class="small" id="dataMsg" role="status"></p>
       </section>
     </div>
   </div>
@@ -282,6 +309,7 @@ svg text { fill: var(--muted); font-family: var(--mono); font-size: 10px; }
 
   let view = new Date(); view.setDate(1);
   let type = "expense";
+  let editingId = null;
   const $ = id => document.getElementById(id);
 
   const money = (n, opts = {}) => {
@@ -336,10 +364,11 @@ svg text { fill: var(--muted); font-family: var(--mono); font-size: 10px; }
     $("list").innerHTML = sorted.length ? sorted.map(t => {
       const d = new Date(t.date + "T00:00:00").toLocaleDateString(undefined, { month: "short", day: "numeric" });
       const sign = t.type === "income" ? "+" : "−";
-      return `<li><span class="dot" style="background:${colorOf(t.cat, t.type)}"></span>
+      return `<li class="${t.id === editingId ? "editing" : ""}"><span class="dot" style="background:${colorOf(t.cat, t.type)}"></span>
         <div class="what"><b>${esc(t.note || catOf(t.cat).name)}</b><span>${catOf(t.cat).name} · ${d}</span></div>
         <span class="num ${t.type === "income" ? "in" : "out"}">${sign}${money(t.amount)}</span>
-        <button class="del" data-id="${t.id}" aria-label="Delete entry">×</button></li>`;
+        <button class="edit" data-id="${t.id}" aria-label="Edit entry" title="Edit"><svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><path fill="currentColor" d="M3 17.25V21h3.75L17.8 9.94l-3.75-3.75L3 17.25Zm17.7-10.2a1 1 0 0 0 0-1.41l-2.34-2.34a1 1 0 0 0-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83Z"/></svg></button>
+        <button class="del" data-id="${t.id}" aria-label="Delete entry" title="Delete">×</button></li>`;
     }).join("") : `<li class="empty" style="display:block">Nothing logged for this month yet. Add your first entry above.</li>`;
 
     // donut
@@ -410,15 +439,91 @@ svg text { fill: var(--muted); font-family: var(--mono); font-size: 10px; }
     const amount = parseAmt($("amt").value);
     if (!(amount > 0)) { $("err").textContent = "Enter an amount greater than zero."; $("amt").focus(); return; }
     const date = $("date").value || todayStr();
-    state.tx.push({ id: uid(), type, cat: $("cat").value, amount, note: $("note").value.trim(), date });
+    const entry = { type, cat: $("cat").value, amount, note: $("note").value.trim(), date };
+    const old = editingId && state.tx.find(t => t.id === editingId);
+    if (old) { Object.assign(old, entry); delete old.sample; } else state.tx.push({ id: uid(), ...entry });
     save();
+    stopEdit();
     $("err").textContent = ""; $("amt").value = ""; $("note").value = "";
     const d = new Date(date + "T00:00:00"); view = new Date(d.getFullYear(), d.getMonth(), 1);
     render(); $("amt").focus();
   };
   $("list").onclick = e => {
+    const ed = e.target.closest(".edit");
+    if (ed) return startEdit(ed.dataset.id);
     const b = e.target.closest(".del"); if (!b) return;
+    if (b.dataset.id === editingId) { stopEdit(); $("amt").value = ""; $("note").value = ""; }
     state.tx = state.tx.filter(t => t.id !== b.dataset.id); save(); render();
+  };
+  function startEdit(id) {
+    const t = state.tx.find(x => x.id === id); if (!t) return;
+    editingId = id;
+    setType(t.type);
+    $("cat").value = t.cat;
+    $("amt").value = t.amount;
+    $("date").value = t.date;
+    $("note").value = t.note || "";
+    $("formTitle").textContent = "Edit entry";
+    $("saveBtn").textContent = "Save changes";
+    $("cancelEdit").hidden = false;
+    $("err").textContent = "";
+    render();
+    $("addForm").scrollIntoView({ behavior: "smooth", block: "center" });
+    $("amt").focus({ preventScroll: true });
+  }
+  function stopEdit() {
+    editingId = null;
+    $("formTitle").textContent = "Add an entry";
+    $("saveBtn").textContent = "Add";
+    $("cancelEdit").hidden = true;
+  }
+  $("cancelEdit").onclick = () => { stopEdit(); $("amt").value = ""; $("note").value = ""; $("date").value = todayStr(); render(); };
+
+  // ---- backup & restore ----
+  const dataMsg = (text, kind) => { $("dataMsg").textContent = text; $("dataMsg").className = "small " + (kind || ""); };
+  $("backupBtn").onclick = async () => {
+    const filename = "pocket-ledger-backup-" + todayStr() + ".json";
+    const json = JSON.stringify({ app: "pocket-ledger", version: 1, savedAt: new Date().toISOString(), ...state }, null, 1);
+    const cap = window.Capacitor;
+    try {
+      if (cap && cap.isNativePlatform && cap.isNativePlatform()) {
+        const res = await cap.nativePromise("Filesystem", "writeFile", { path: filename, data: json, directory: "CACHE", encoding: "utf8" });
+        await cap.nativePromise("Share", "share", { title: "Pocket Ledger backup", url: res.uri, dialogTitle: "Save your backup" });
+        return dataMsg("Backup ready. Pick where to keep it, like Google Drive.", "ok");
+      }
+      const dl = window.claude && window.claude.use ? await window.claude.use("downloads") : null;
+      if (dl) { await dl.save({ filename, data: json }); return dataMsg("Backup saved as " + filename + ".", "ok"); }
+      const a = document.createElement("a");
+      a.href = URL.createObjectURL(new Blob([json], { type: "application/json" }));
+      a.download = filename; document.body.appendChild(a); a.click(); a.remove();
+      dataMsg("Backup saved as " + filename + ".", "ok");
+    } catch (err) {
+      const code = err && (err.code || err.message || "");
+      if (/declined|cancel/i.test(String(code))) return dataMsg("Backup cancelled.");
+      dataMsg("The backup couldn't be saved here. Try again, or use the Android app.", "bad");
+    }
+  };
+  let pending = null;
+  $("restoreBtn").onclick = () => { $("restoreFile").value = ""; $("restoreFile").click(); };
+  $("restoreFile").onchange = async e => {
+    const f = e.target.files && e.target.files[0]; if (!f) return;
+    try {
+      const d = JSON.parse(await f.text());
+      if (!d || !Array.isArray(d.tx)) throw new Error("bad");
+      const tx = d.tx.filter(t => t && t.id && (t.type === "income" || t.type === "expense") && typeof t.amount === "number" && /^\d{4}-\d{2}-\d{2}$/.test(t.date));
+      pending = { tx, currency: d.currency || state.currency, budget: Number(d.budget) || 0, catBudgets: d.catBudgets && typeof d.catBudgets === "object" ? d.catBudgets : {} };
+      const when = d.savedAt ? " from " + new Date(d.savedAt).toLocaleDateString() : "";
+      $("restoreText").textContent = "This backup" + when + " has " + tx.length + " entries. It will replace everything in the app now.";
+      $("restoreConfirm").hidden = false; dataMsg("");
+    } catch (err) { pending = null; dataMsg("That file isn't a Pocket Ledger backup. Pick the .json file you saved before.", "bad"); }
+  };
+  $("restoreNo").onclick = () => { pending = null; $("restoreConfirm").hidden = true; };
+  $("restoreYes").onclick = () => {
+    if (!pending) return;
+    state = pending; pending = null; save(); stopEdit();
+    $("restoreConfirm").hidden = true;
+    view = new Date(); view.setDate(1); render();
+    dataMsg("Restored " + state.tx.length + " entries.", "ok");
   };
   $("budgetTotal").onchange = e => { const n = parseAmt(e.target.value); state.budget = n > 0 ? n : 0; save(); render(); };
   $("budgets").onchange = e => {

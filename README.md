@@ -7,6 +7,8 @@ A simple personal finance app that runs in your browser.
 - See income, spending and what's left for each month
 - Set a monthly budget and optional limits per category
 - Charts: spending by category and the last 6 months of income vs spending
+- Edit or delete any entry
+- Save a backup file and restore it later
 - Pick your currency (including USD and Iraqi dinar)
 - Savings category to track money you put aside
 
