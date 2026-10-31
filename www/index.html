@@ -113,6 +113,41 @@ form.add input, form.add select { width: 100%; border: 1px solid var(--line); ba
 .debts .payrow { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
 .debts .payrow input { width: 8em; border: 1px solid var(--line); background: var(--bg); border-radius: 6px; padding: 5px 8px; font-family: var(--mono); }
 .debts li.closed { opacity: 0.6; }
+.tips { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+.tips li { display: grid; grid-template-columns: 22px minmax(0, 1fr); gap: 8px; align-items: start; }
+.tips .ic { width: 22px; height: 22px; border-radius: 50%; display: grid; place-items: center; font-size: 0.8rem; font-weight: 700; color: var(--surface); }
+.ic.good { background: var(--income); } .ic.bad { background: var(--expense); } .ic.info { background: var(--accent); }
+.search { width: 100%; border: 1px solid var(--line); background: var(--bg); border-radius: 8px; padding: 8px 12px; }
+.goals { list-style: none; margin: 0; padding: 0; display: grid; gap: 14px; }
+.goals li { display: grid; gap: 6px; }
+.goals .top { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 8px; align-items: baseline; }
+.goals .top b { font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.goals .meter { height: 10px; margin: 0; }
+.goals .meter i { background: var(--c9); }
+.goals .acts { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+.goals .acts button { font-size: 0.85rem; padding: 5px 10px; }
+.goals .acts input { width: 8em; border: 1px solid var(--line); background: var(--bg); border-radius: 6px; padding: 5px 8px; font-family: var(--mono); }
+.pill.reached { background: var(--c9); color: var(--surface); }
+.setting { display: grid; gap: 8px; padding-top: 12px; border-top: 1px solid var(--line); }
+.panel-head + .setting { border-top: 0; padding-top: 0; }
+.setting .row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.setting input[type=password], .setting input[type=time] { border: 1px solid var(--line); background: var(--bg); border-radius: 8px; padding: 7px 10px; font-family: var(--mono); width: 9em; }
+.switch { display: flex; gap: 8px; align-items: center; font-weight: 500; }
+.switch input { width: 18px; height: 18px; accent-color: var(--accent); }
+#setMsg.ok { color: var(--income); } #setMsg.bad { color: var(--expense); }
+.lock { position: fixed; inset: 0; z-index: 50; background: var(--bg); display: grid; place-items: center; padding: max(24px, env(safe-area-inset-top, 0px)) max(16px, env(safe-area-inset-right, 0px)) max(24px, env(safe-area-inset-bottom, 0px)) max(16px, env(safe-area-inset-left, 0px)); }
+.lock-box { display: grid; gap: 18px; justify-items: center; width: min(320px, 100%); text-align: center; }
+.lock-box h2 { font-size: 1.4rem; }
+.pin-dots { display: flex; gap: 14px; height: 18px; }
+.pin-dots i { width: 14px; height: 14px; border-radius: 50%; border: 2px solid var(--accent); }
+.pin-dots i.on { background: var(--accent); }
+.pin-dots.shake { animation: shake .35s; }
+@keyframes shake { 25% { transform: translateX(-8px); } 75% { transform: translateX(8px); } }
+.keypad { display: grid; grid-template-columns: repeat(3, 72px); gap: 12px; }
+.keypad button { height: 72px; border-radius: 50%; border: 1px solid var(--line); background: var(--surface); font-family: var(--display); font-size: 1.5rem; }
+.keypad button:active { background: var(--accent-soft); }
+.keypad .blank { visibility: hidden; }
+.keypad .fn { font-size: 1rem; font-family: var(--body); }
 .err { color: var(--expense); font-size: 0.85rem; min-height: 1.2em; margin: -4px 0 0; }
 
 .list { list-style: none; margin: 0; padding: 0; display: grid; }
@@ -188,6 +223,11 @@ svg text { fill: var(--muted); font-family: var(--mono); font-size: 10px; }
       <div class="meter"><i id="sSaveBar" style="background:var(--c9)"></i></div><span class="small" id="sSaveNote"></span></div>
   </section>
 
+  <section class="panel" id="tipsPanel" hidden>
+    <div class="panel-head"><h2>Tips for this month</h2><span class="small" id="tipsNote"></span></div>
+    <ul class="tips" id="tips"></ul>
+  </section>
+
   <div class="cols">
     <div style="display:grid;gap:20px;min-width:0">
       <section class="panel">
@@ -222,6 +262,7 @@ svg text { fill: var(--muted); font-family: var(--mono); font-size: 10px; }
 
       <section class="panel">
         <div class="panel-head"><h2>Entries</h2><span class="small" id="count"></span></div>
+        <input class="search" id="search" type="search" placeholder="Search all entries, e.g. taxi" autocomplete="off" aria-label="Search entries">
         <ul class="list" id="list"></ul>
       </section>
     </div>
@@ -249,6 +290,17 @@ svg text { fill: var(--muted); font-family: var(--mono); font-size: 10px; }
       </section>
 
       <section class="panel">
+        <div class="panel-head"><h2>Savings goals</h2><span class="small" id="goalsNote"></span></div>
+        <form id="goalForm" novalidate class="debt-add">
+          <label style="display:grid;gap:4px;min-width:0"><span class="label">Goal</span><input id="gName" placeholder="e.g. Car" maxlength="40" autocomplete="off"></label>
+          <label style="display:grid;gap:4px;min-width:0"><span class="label">Target</span><input id="gTarget" inputmode="decimal" placeholder="0" autocomplete="off"></label>
+          <button class="primary" type="submit" style="width:auto">Add goal</button>
+        </form>
+        <p class="err" id="gErr" role="alert" style="margin:0"></p>
+        <ul class="goals" id="goals"></ul>
+      </section>
+
+      <section class="panel">
         <div class="panel-head"><h2>Where it went</h2><span class="small">Spending by category</span></div>
         <div class="donut-wrap">
           <svg id="donut" viewBox="0 0 160 160" width="160" height="160" role="img" aria-label="Spending by category"></svg>
@@ -270,6 +322,36 @@ svg text { fill: var(--muted); font-family: var(--mono); font-size: 10px; }
       </section>
 
       <section class="panel">
+        <div class="panel-head"><h2>Lock and reminder</h2></div>
+        <div class="setting">
+          <span class="label">App lock</span>
+          <span class="small" id="lockState"></span>
+          <div class="row" id="lockActions"></div>
+          <div class="row" id="pinSetup" hidden>
+            <input type="password" id="pin1" inputmode="numeric" maxlength="6" placeholder="New PIN" autocomplete="new-password" aria-label="New PIN">
+            <input type="password" id="pin2" inputmode="numeric" maxlength="6" placeholder="Repeat PIN" autocomplete="new-password" aria-label="Repeat PIN">
+            <button class="primary" type="button" id="pinSave" style="width:auto">Save PIN</button>
+            <button class="ghost" type="button" id="pinCancel">Cancel</button>
+          </div>
+          <div class="row" id="pinOff" hidden>
+            <input type="password" id="pinCur" inputmode="numeric" maxlength="6" placeholder="Current PIN" autocomplete="current-password" aria-label="Current PIN">
+            <button class="danger" type="button" id="pinOffYes">Turn off lock</button>
+            <button class="ghost" type="button" id="pinOffNo">Cancel</button>
+          </div>
+          <label class="switch" id="bioRow" hidden><input type="checkbox" id="bio"> Unlock with fingerprint</label>
+        </div>
+        <div class="setting">
+          <span class="label">Daily reminder</span>
+          <div class="row">
+            <label class="switch"><input type="checkbox" id="remind"> Remind me to log my spending at</label>
+            <input type="time" id="remindTime" value="20:00" aria-label="Reminder time">
+          </div>
+          <span class="small" id="remindNote"></span>
+        </div>
+        <p class="small" id="setMsg" role="status" style="margin:0"></p>
+      </section>
+
+      <section class="panel">
         <div class="panel-head"><h2>Backup</h2></div>
         <p class="small" style="margin:0">Your entries are kept only on this device. Save a backup now and then, for example to Google Drive or your messages, so you never lose them.</p>
         <div class="data-row">
@@ -284,6 +366,21 @@ svg text { fill: var(--muted); font-family: var(--mono); font-size: 10px; }
         </div>
         <p class="small" id="dataMsg" role="status"></p>
       </section>
+    </div>
+  </div>
+</div>
+
+<div class="lock" id="lock" hidden role="dialog" aria-modal="true" aria-label="Unlock Pocket Ledger">
+  <div class="lock-box">
+    <h2>Pocket Ledger</h2>
+    <span class="small" id="lockMsg">Enter your PIN</span>
+    <div class="pin-dots" id="pinDots"></div>
+    <div class="keypad" id="keypad"></div>
+    <button class="linkbtn" type="button" id="forgot">Forgot PIN?</button>
+    <div class="confirm" id="forgotBox" hidden style="text-align:left">
+      <span>Resetting removes the lock and all data on this device. You can then load your last backup.</span>
+      <button class="danger" type="button" id="forgotYes">Reset app</button>
+      <button class="ghost" type="button" id="forgotNo">Cancel</button>
     </div>
   </div>
 </div>
@@ -346,6 +443,7 @@ svg text { fill: var(--muted); font-family: var(--mono); font-size: 10px; }
   try { state = JSON.parse(localStorage.getItem(KEY)); } catch (e) { state = null; }
   if (!state || !Array.isArray(state.tx)) state = sampleData();
   if (!Array.isArray(state.debts)) state.debts = [];
+  if (!Array.isArray(state.goals)) state.goals = [];
   const save = () => { try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) {} };
 
   let view = new Date(); view.setDate(1);
@@ -400,17 +498,19 @@ svg text { fill: var(--muted); font-family: var(--mono); font-size: 10px; }
       : (inc > 0 ? Math.round(saved / inc * 100) + "% of your income" : "Set a goal next to Savings below");
 
     // entries
-    const sorted = [...m].sort((a, b) => b.date.localeCompare(a.date));
-    $("count").textContent = sorted.length ? sorted.length + (sorted.length === 1 ? " entry" : " entries") : "";
+    const q = ($("search").value || "").trim().toLowerCase();
+    const base = q ? state.tx.filter(t => ((t.note || "") + " " + catOf(t.cat).name + " " + t.amount).toLowerCase().includes(q)) : m;
+    const sorted = [...base].sort((a, b) => b.date.localeCompare(a.date));
+    $("count").textContent = q ? sorted.length + (sorted.length === 1 ? " match" : " matches") + (sorted.length ? ", " + money(sum(sorted.filter(t => t.type === "expense"))) + " spent" : "") : sorted.length ? sorted.length + (sorted.length === 1 ? " entry" : " entries") : "";
     $("list").innerHTML = sorted.length ? sorted.map(t => {
-      const d = new Date(t.date + "T00:00:00").toLocaleDateString(undefined, { month: "short", day: "numeric" });
+      const d = new Date(t.date + "T00:00:00").toLocaleDateString(undefined, q ? { month: "short", day: "numeric", year: "numeric" } : { month: "short", day: "numeric" });
       const sign = t.type === "income" ? "+" : "−";
       return `<li class="${t.id === editingId ? "editing" : ""}"><span class="dot" style="background:${colorOf(t.cat, t.type)}"></span>
         <div class="what"><b>${esc(t.note || catOf(t.cat).name)}</b><span>${catOf(t.cat).name} · ${d}</span></div>
         <span class="num ${t.type === "income" ? "in" : "out"}">${sign}${money(t.amount)}</span>
         <button class="edit" data-id="${t.id}" aria-label="Edit entry" title="Edit"><svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><path fill="currentColor" d="M3 17.25V21h3.75L17.8 9.94l-3.75-3.75L3 17.25Zm17.7-10.2a1 1 0 0 0 0-1.41l-2.34-2.34a1 1 0 0 0-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83Z"/></svg></button>
         <button class="del" data-id="${t.id}" aria-label="Delete entry" title="Delete">×</button></li>`;
-    }).join("") : `<li class="empty" style="display:block">Nothing logged for this month yet. Add your first entry above.</li>`;
+    }).join("") : `<li class="empty" style="display:block">${q ? "No entries match “" + esc(q) + "”." : "Nothing logged for this month yet. Add your first entry above."}</li>`;
 
     // donut
     const byCat = EXP_CATS.map(c => ({ ...c, total: sum(m.filter(t => t.type === "expense" && t.cat === c.id)) })).filter(c => c.total > 0).sort((a, b) => b.total - a.total);
@@ -439,6 +539,8 @@ svg text { fill: var(--muted); font-family: var(--mono); font-size: 10px; }
 
     drawBars();
     renderDebts();
+    renderGoals();
+    renderTips(m, key);
   }
 
   function drawBars() {
@@ -553,7 +655,7 @@ svg text { fill: var(--muted); font-family: var(--mono); font-size: 10px; }
       const d = JSON.parse(await f.text());
       if (!d || !Array.isArray(d.tx)) throw new Error("bad");
       const tx = d.tx.filter(t => t && t.id && (t.type === "income" || t.type === "expense") && typeof t.amount === "number" && /^\d{4}-\d{2}-\d{2}$/.test(t.date));
-      pending = { tx, debts: Array.isArray(d.debts) ? d.debts.filter(x => x && x.id && x.who && typeof x.amount === "number") : [], currency: d.currency || state.currency, budget: Number(d.budget) || 0, catBudgets: d.catBudgets && typeof d.catBudgets === "object" ? d.catBudgets : {} };
+      pending = { tx, goals: Array.isArray(d.goals) ? d.goals.filter(g => g && g.id && g.name && typeof g.target === "number") : [], debts: Array.isArray(d.debts) ? d.debts.filter(x => x && x.id && x.who && typeof x.amount === "number") : [], currency: d.currency || state.currency, budget: Number(d.budget) || 0, catBudgets: d.catBudgets && typeof d.catBudgets === "object" ? d.catBudgets : {} };
       const when = d.savedAt ? " from " + new Date(d.savedAt).toLocaleDateString() : "";
       $("restoreText").textContent = "This backup" + when + " has " + tx.length + " entries. It will replace everything in the app now.";
       $("restoreConfirm").hidden = false; dataMsg("");
@@ -751,9 +853,226 @@ svg text { fill: var(--muted); font-family: var(--mono); font-size: 10px; }
     } catch (err) { listening = false; $("mic").classList.remove("on"); micFallback(); }
   };
 
+  // ---- search ----
+  $("search").oninput = () => render();
+
+  // ---- savings goals ----
+  let fundingId = null;
+  $("goalForm").onsubmit = e => {
+    e.preventDefault();
+    const name = $("gName").value.trim(), target = parseAmt($("gTarget").value);
+    if (!name) { $("gErr").textContent = "Give the goal a name."; $("gName").focus(); return; }
+    if (!(target > 0)) { $("gErr").textContent = "Enter a target greater than zero."; $("gTarget").focus(); return; }
+    $("gErr").textContent = ""; $("gName").value = ""; $("gTarget").value = "";
+    state.goals.push({ id: uid(), name, target, saved: 0 }); save(); renderGoals();
+  };
+  function renderGoals() {
+    const total = sum(state.goals.map(g => ({ amount: g.saved })));
+    $("goalsNote").textContent = state.goals.length ? money(total, { round: true }) + " saved in total" : "";
+    $("goals").innerHTML = state.goals.length ? state.goals.map(g => {
+      const p = g.saved / g.target, done = p >= 1;
+      return `<li><div class="top"><b>${done ? '<span class="pill reached">Reached</span>' : ""}${esc(g.name)}</b><span class="num">${money(g.saved, { round: true })} <span class="small">/ ${money(g.target, { round: true })}</span></span></div>
+        <div class="meter"><i style="width:${Math.min(100, p * 100)}%"></i></div>
+        <div class="acts">${fundingId === g.id
+          ? `<input id="fundAmt" inputmode="decimal" placeholder="Amount" aria-label="Amount to add"><button class="primary" style="width:auto;padding:5px 12px" data-act="fundsave" data-id="${g.id}">Add</button><button class="ghost" data-act="fundcancel">Cancel</button>`
+          : `${done ? "" : `<button class="ghost" data-act="fund" data-id="${g.id}">Add money</button>`}<span class="small">${done ? "You did it!" : Math.round(p * 100) + "% there, " + money(g.target - g.saved, { round: true }) + " to go"}</span><button class="del" data-act="del" data-id="${g.id}" aria-label="Delete goal" title="Delete" style="margin-left:auto">×</button>`}</div></li>`;
+    }).join("") : `<li class="small">No goals yet. Add something you're saving for, like a car or a trip.</li>`;
+    if (fundingId && $("fundAmt")) $("fundAmt").focus();
+  }
+  $("goals").onclick = e => {
+    const b = e.target.closest("button[data-act]"); if (!b) return;
+    const g = state.goals.find(x => x.id === b.dataset.id), act = b.dataset.act;
+    if (act === "fund") { fundingId = g.id; renderGoals(); }
+    else if (act === "fundcancel") { fundingId = null; renderGoals(); }
+    else if (act === "fundsave") {
+      const n = parseAmt($("fundAmt").value); fundingId = null;
+      if (n > 0) {
+        g.saved = Math.round((g.saved + n) * 100) / 100;
+        state.tx.push({ id: uid(), type: "expense", cat: "savings", amount: n, note: "Saved for " + g.name, date: todayStr() });
+        save(); render();
+      } else renderGoals();
+    }
+    else if (act === "del") { state.goals = state.goals.filter(x => x.id !== g.id); save(); renderGoals(); }
+  };
+  $("goals").onkeydown = e => { if (e.key === "Enter" && e.target.id === "fundAmt") { e.preventDefault(); const b = $("goals").querySelector('[data-act="fundsave"]'); if (b) b.click(); } };
+
+  // ---- monthly tips ----
+  function renderTips(m, key) {
+    const prevD = new Date(view.getFullYear(), view.getMonth() - 1, 1);
+    const isCur = key === ym(new Date()), today = new Date().getDate();
+    const pm = inMonth(ym(prevD)).filter(t => !isCur || Number(t.date.slice(8, 10)) <= today);
+    const tips = [];
+    const inc = sum(m.filter(t => t.type === "income"));
+    const exp = sum(m.filter(t => t.type === "expense" && t.cat !== "savings"));
+    const saved = sum(m.filter(t => t.cat === "savings"));
+    const prevName = prevD.toLocaleDateString(undefined, { month: "long" });
+    if (pm.length) {
+      const changes = EXP_CATS.filter(c => c.id !== "savings" && c.id !== "debt").map(c => {
+        const now = sum(m.filter(t => t.type === "expense" && t.cat === c.id)), before = sum(pm.filter(t => t.type === "expense" && t.cat === c.id));
+        return { c, now, before, diff: now - before, pct: before ? (now - before) / before : 0 };
+      }).filter(x => x.before > 0 && Math.abs(x.pct) >= 0.15 && Math.abs(x.diff) >= 0.02 * Math.max(1, exp));
+      const up = changes.filter(x => x.diff > 0).sort((a, b) => b.diff - a.diff)[0];
+      const down = changes.filter(x => x.diff < 0).sort((a, b) => a.diff - b.diff)[0];
+      if (up) tips.push(["bad", "!", `You spent ${Math.round(up.pct * 100)}% more on ${up.c.name} than in ${prevName} (${money(up.now, { round: true })} vs ${money(up.before, { round: true })}).`]);
+      if (down && down.now > 0) tips.push(["good", "✓", `Nice: ${Math.round(-down.pct * 100)}% less on ${down.c.name} than in ${prevName}.`]);
+    }
+    const over = EXP_CATS.map(c => ({ c, spent: sum(m.filter(t => t.type === "expense" && t.cat === c.id)), lim: state.catBudgets[c.id] || 0 }))
+      .filter(x => x.c.id !== "savings" && x.lim && x.spent > x.lim).sort((a, b) => (b.spent - b.lim) - (a.spent - a.lim))[0];
+    if (over) tips.push(["bad", "!", `${over.c.name} is ${money(over.spent - over.lim, { round: true })} over its limit.`]);
+    if (inc > 0 && exp + saved > inc) tips.push(["bad", "!", `You spent ${money(exp + saved - inc, { round: true })} more than you earned this month.`]);
+    else if (inc > 0 && saved > 0) tips.push(["good", "✓", `You saved ${Math.round(saved / inc * 100)}% of your income this month.`]);
+    else if (inc > 0 && saved === 0 && exp < inc) tips.push(["info", "i", `You have ${money(inc - exp, { round: true })} left. Moving some to savings now makes it easier to keep.`]);
+    const top = EXP_CATS.filter(c => c.id !== "savings" && c.id !== "housing").map(c => ({ c, v: sum(m.filter(t => t.type === "expense" && t.cat === c.id)) })).sort((a, b) => b.v - a.v)[0];
+    if (tips.length < 3 && top && top.v > 0 && exp > 0) tips.push(["info", "i", `Your biggest cost after housing is ${top.c.name}: ${Math.round(top.v / exp * 100)}% of your spending.`]);
+    $("tipsPanel").hidden = !tips.length;
+    $("tipsNote").textContent = pm.length ? "Compared with " + prevName + (isCur ? " up to the same day" : "") : "";
+    $("tips").innerHTML = tips.slice(0, 3).map(([k, ic, t]) => `<li><span class="ic ${k}" aria-hidden="true">${ic}</span><span>${esc(t)}</span></li>`).join("");
+  }
+
+  // ---- native helpers ----
+  const CAP = window.Capacitor;
+  const isNative = !!(CAP && CAP.isNativePlatform && CAP.isNativePlatform());
+  const native = (plugin, method, opts) => CAP.nativePromise(plugin, method, opts || {});
+  const setMsg = (t, k) => { $("setMsg").textContent = t; $("setMsg").className = "small " + (k || ""); };
+
+  // ---- app lock ----
+  const LOCK_KEY = "pocket-ledger-lock";
+  let lockCfg = null;
+  try { lockCfg = JSON.parse(localStorage.getItem(LOCK_KEY)); } catch (e) {}
+  const saveLock = () => { try { lockCfg ? localStorage.setItem(LOCK_KEY, JSON.stringify(lockCfg)) : localStorage.removeItem(LOCK_KEY); } catch (e) {} };
+  async function hashPin(pin) {
+    const salt = (lockCfg && lockCfg.salt) || uid() + uid();
+    let h;
+    try { const buf = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(salt + ":" + pin)); h = Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2, "0")).join(""); }
+    catch (e) { h = String([...(salt + pin)].reduce((a, c) => (a * 31 + c.charCodeAt(0)) >>> 0, 7)); }
+    return { salt, h };
+  }
+  let bioAvailable = false;
+  async function checkBio() {
+    if (!isNative) return false;
+    try { const r = await native("NativeBiometric", "isAvailable", {}); bioAvailable = !!(r && r.isAvailable); } catch (e) { bioAvailable = false; }
+    return bioAvailable;
+  }
+  function renderLockSettings() {
+    const on = !!(lockCfg && lockCfg.h);
+    $("lockState").textContent = on ? "On. The app asks for your PIN when you open it." : "Off. Anyone with your phone can open the app.";
+    $("lockActions").innerHTML = on
+      ? `<button class="ghost" type="button" data-lock="change">Change PIN</button><button class="ghost" type="button" data-lock="off">Turn off</button>`
+      : `<button class="primary" type="button" data-lock="set" style="width:auto">Set a PIN</button>`;
+    $("bioRow").hidden = !(on && bioAvailable);
+    $("bio").checked = !!(lockCfg && lockCfg.bio);
+  }
+  $("lockActions").onclick = e => {
+    const b = e.target.closest("[data-lock]"); if (!b) return;
+    $("pinSetup").hidden = true; $("pinOff").hidden = true; setMsg("");
+    if (b.dataset.lock === "off") { $("pinOff").hidden = false; $("pinCur").value = ""; $("pinCur").focus(); }
+    else { $("pinSetup").hidden = false; $("pin1").value = ""; $("pin2").value = ""; $("pin1").focus(); }
+  };
+  $("pinCancel").onclick = () => { $("pinSetup").hidden = true; };
+  $("pinOffNo").onclick = () => { $("pinOff").hidden = true; };
+  $("pinSave").onclick = async () => {
+    const a = $("pin1").value, b = $("pin2").value;
+    if (!/^\d{4,6}$/.test(a)) return setMsg("Use 4 to 6 digits for your PIN.", "bad");
+    if (a !== b) return setMsg("The two PINs don't match. Try again.", "bad");
+    const salt = uid() + uid();
+    lockCfg = { salt, bio: !!(lockCfg && lockCfg.bio) };
+    const r = await hashPin(a); lockCfg.h = r.h; lockCfg.len = a.length; saveLock();
+    $("pinSetup").hidden = true; renderLockSettings();
+    setMsg("PIN saved. The app is now locked when you open it.", "ok");
+  };
+  $("pinOffYes").onclick = async () => {
+    const r = await hashPin($("pinCur").value);
+    if (!lockCfg || r.h !== lockCfg.h) return setMsg("That PIN isn't right.", "bad");
+    lockCfg = null; saveLock(); $("pinOff").hidden = true; renderLockSettings(); setMsg("App lock is off.", "ok");
+  };
+  $("bio").onchange = async e => {
+    if (!lockCfg) return;
+    if (e.target.checked) {
+      try { await native("NativeBiometric", "verifyIdentity", { reason: "Turn on fingerprint unlock", title: "Pocket Ledger", negativeButtonText: "Cancel" }); lockCfg.bio = true; setMsg("Fingerprint unlock is on.", "ok"); }
+      catch (err) { e.target.checked = false; setMsg("Fingerprint wasn't confirmed, so it stays off.", "bad"); }
+    } else { lockCfg.bio = false; setMsg("Fingerprint unlock is off.", "ok"); }
+    saveLock();
+  };
+
+  // lock screen
+  let entered = "", locked = false, hiddenAt = 0;
+  const keys = ["1","2","3","4","5","6","7","8","9","bio","0","del"];
+  function drawKeypad() {
+    $("keypad").innerHTML = keys.map(k => k === "del" ? `<button type="button" class="fn" data-k="del" aria-label="Delete digit">⌫</button>`
+      : k === "bio" ? (lockCfg && lockCfg.bio && bioAvailable ? `<button type="button" class="fn" data-k="bio" aria-label="Use fingerprint">Finger</button>` : `<button type="button" class="blank" tabindex="-1" aria-hidden="true"></button>`)
+      : `<button type="button" data-k="${k}">${k}</button>`).join("");
+  }
+  function drawDots(len) { $("pinDots").innerHTML = Array.from({ length: Math.max(4, len) }, (_, i) => `<i class="${i < entered.length ? "on" : ""}"></i>`).join(""); }
+  function lockNow() {
+    if (!lockCfg || !lockCfg.h) return;
+    locked = true; entered = ""; $("lock").hidden = false; $("forgotBox").hidden = true;
+    $("lockMsg").textContent = "Enter your PIN"; drawKeypad(); drawDots(lockCfg.len || 4);
+    if (lockCfg.bio && bioAvailable) tryBio();
+  }
+  function unlock() { locked = false; entered = ""; $("lock").hidden = true; }
+  async function tryBio() {
+    try { await native("NativeBiometric", "verifyIdentity", { reason: "Unlock Pocket Ledger", title: "Pocket Ledger", negativeButtonText: "Use PIN" }); unlock(); } catch (e) {}
+  }
+  async function pressKey(k) {
+    if (!locked) return;
+    if (k === "bio") return tryBio();
+    if (k === "del") entered = entered.slice(0, -1); else entered += k;
+    const len = lockCfg.len || 4;
+    drawDots(len);
+    if (entered.length >= len) {
+      const r = await hashPin(entered);
+      if (r.h === lockCfg.h) return unlock();
+      entered = ""; $("lockMsg").textContent = "Wrong PIN. Try again."; const d = $("pinDots"); d.classList.remove("shake"); void d.offsetWidth; d.classList.add("shake"); drawDots(len);
+    }
+  }
+  $("keypad").onclick = e => { const b = e.target.closest("[data-k]"); if (b) pressKey(b.dataset.k); };
+  document.addEventListener("keydown", e => { if (!locked) return; if (/^\d$/.test(e.key)) pressKey(e.key); else if (e.key === "Backspace") pressKey("del"); });
+  $("forgot").onclick = () => { $("forgotBox").hidden = false; };
+  $("forgotNo").onclick = () => { $("forgotBox").hidden = true; };
+  $("forgotYes").onclick = () => {
+    lockCfg = null; saveLock();
+    state = { tx: [], debts: [], goals: [], currency: state.currency, budget: 0, catBudgets: {} }; save();
+    unlock(); renderLockSettings(); render();
+    setMsg("The app was reset. Use Restore from backup to load your data.", "ok");
+    $("restoreBtn").scrollIntoView({ block: "center" });
+  };
+  document.addEventListener("visibilitychange", () => {
+    if (document.hidden) hiddenAt = Date.now();
+    else if (lockCfg && lockCfg.h && !locked && hiddenAt && Date.now() - hiddenAt > 60000) lockNow();
+  });
+
+  // ---- daily reminder ----
+  const REM_KEY = "pocket-ledger-reminder";
+  let rem = null;
+  try { rem = JSON.parse(localStorage.getItem(REM_KEY)); } catch (e) {}
+  if (rem && rem.time) $("remindTime").value = rem.time;
+  $("remind").checked = !!(rem && rem.on);
+  if (!isNative) { $("remind").disabled = true; $("remindTime").disabled = true; $("remindNote").textContent = "Reminders work in the Android app."; }
+  async function applyReminder() {
+    const on = $("remind").checked, time = $("remindTime").value || "20:00";
+    try {
+      await native("LocalNotifications", "cancel", { notifications: [{ id: 7001 }] });
+      if (on) {
+        let perm = await native("LocalNotifications", "checkPermissions");
+        if (perm.display !== "granted") perm = await native("LocalNotifications", "requestPermissions");
+        if (perm.display !== "granted") { $("remind").checked = false; setMsg("Notifications are blocked. Allow them for Pocket Ledger in your phone settings.", "bad"); return saveRem(false, time); }
+        const [hour, minute] = time.split(":").map(Number);
+        await native("LocalNotifications", "schedule", { notifications: [{ id: 7001, title: "Pocket Ledger", body: "Did you spend anything today? Take 10 seconds to log it.", schedule: { on: { hour, minute }, allowWhileIdle: true } }] });
+        setMsg("You'll get a reminder every day at " + time + ".", "ok");
+      } else setMsg("Daily reminder is off.", "ok");
+      saveRem(on, time);
+    } catch (err) { $("remind").checked = false; setMsg("The reminder couldn't be set on this phone.", "bad"); saveRem(false, time); }
+  }
+  function saveRem(on, time) { rem = { on, time }; try { localStorage.setItem(REM_KEY, JSON.stringify(rem)); } catch (e) {} }
+  $("remind").onchange = applyReminder;
+  $("remindTime").onchange = () => { if ($("remind").checked) applyReminder(); else saveRem(false, $("remindTime").value); };
+
   $("date").value = todayStr();
   setType("expense");
   render();
+  renderLockSettings();
+  if (lockCfg && lockCfg.h) lockNow();
+  checkBio().then(() => { renderLockSettings(); if (locked) { drawKeypad(); if (lockCfg && lockCfg.bio && bioAvailable) tryBio(); } });
 })();
 </script>
 </body>
