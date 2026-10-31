@@ -8,7 +8,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700&family=Public+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap">
 <style>
-/* Layout: one column on phones, a two-column ledger (entries left, budget + charts right) on wide screens. */
+/* Layout: one column on phones, a two-column ledger (entries left, debts, goals + charts right) on wide screens. */
 :root {
   --bg: #f3f6f5;
   --surface: #ffffff;
@@ -143,19 +143,6 @@ form.add input, form.add select { width: 100%; border: 1px solid var(--line); ba
 .switch { display: flex; gap: 8px; align-items: center; font-weight: 500; }
 .switch input { width: 18px; height: 18px; accent-color: var(--accent); }
 #setMsg.ok { color: var(--income); } #setMsg.bad { color: var(--expense); }
-.lock { position: fixed; inset: 0; z-index: 50; background: var(--bg); display: grid; place-items: center; padding: max(24px, env(safe-area-inset-top, 0px)) max(16px, env(safe-area-inset-right, 0px)) max(24px, env(safe-area-inset-bottom, 0px)) max(16px, env(safe-area-inset-left, 0px)); }
-.lock-box { display: grid; gap: 18px; justify-items: center; width: min(320px, 100%); text-align: center; }
-.lock-box h2 { font-size: 1.4rem; }
-.pin-dots { display: flex; gap: 14px; height: 18px; }
-.pin-dots i { width: 14px; height: 14px; border-radius: 50%; border: 2px solid var(--accent); }
-.pin-dots i.on { background: var(--accent); }
-.pin-dots.shake { animation: shake .35s; }
-@keyframes shake { 25% { transform: translateX(-8px); } 75% { transform: translateX(8px); } }
-.keypad { display: grid; grid-template-columns: repeat(3, 72px); gap: 12px; }
-.keypad button { height: 72px; border-radius: 50%; border: 1px solid var(--line); background: var(--surface); font-family: var(--display); font-size: 1.5rem; }
-.keypad button:active { background: var(--accent-soft); }
-.keypad .blank { visibility: hidden; }
-.keypad .fn { font-size: 1rem; font-family: var(--body); }
 .err { color: var(--expense); font-size: 0.85rem; min-height: 1.2em; margin: -4px 0 0; }
 
 .list { list-style: none; margin: 0; padding: 0; display: grid; }
@@ -179,13 +166,6 @@ form.add input, form.add select { width: 100%; border: 1px solid var(--line); ba
 .danger { background: var(--expense); color: var(--surface); border: 0; border-radius: 8px; padding: 7px 12px; font-weight: 600; }
 .empty { color: var(--muted); padding: 18px 0; text-align: center; }
 
-.budgets { display: grid; gap: 12px; }
-.brow { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 2px 10px; align-items: center; }
-.brow .name { display: flex; align-items: center; gap: 8px; font-weight: 500; }
-.brow .meter { grid-column: 1 / -1; margin-top: 2px; }
-.brow input { width: 6.5em; border: 1px solid var(--line); background: var(--bg); border-radius: 6px; padding: 3px 6px; text-align: right; font-family: var(--mono); }
-.budget-total { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
-.budget-total input { width: 8em; border: 1px solid var(--line); background: var(--bg); border-radius: 8px; padding: 6px 8px; font-family: var(--mono); text-align: right; }
 
 .donut-wrap { display: grid; grid-template-columns: 160px minmax(0, 1fr); gap: 16px; align-items: center; }
 @media (max-width: 420px) { .donut-wrap { grid-template-columns: minmax(0, 1fr); justify-items: center; } }
@@ -324,39 +304,14 @@ svg text { fill: var(--muted); font-family: var(--mono); font-size: 10px; }
       </section>
 
       <section class="panel">
-        <div class="panel-head"><h2>Monthly budget</h2></div>
-        <label class="budget-total"><span>Total for the month</span><input id="budgetTotal" inputmode="decimal"></label>
-        <div class="label">Limits per category</div>
-        <div class="budgets" id="budgets"></div>
-      </section>
-
-      <section class="panel">
         <div class="panel-head"><h2>Last 6 months</h2>
           <span class="small"><span class="in">■</span> income &nbsp;<span class="out">■</span> spent</span></div>
         <div class="chart-box"><svg id="bars" viewBox="0 0 420 200" width="100%" role="img" aria-label="Income and spending over the last six months"></svg></div>
       </section>
 
       <section class="panel">
-        <div class="panel-head"><h2>Lock and reminder</h2></div>
+        <div class="panel-head"><h2>Daily reminder</h2></div>
         <div class="setting">
-          <span class="label">App lock</span>
-          <span class="small" id="lockState"></span>
-          <div class="row" id="lockActions"></div>
-          <div class="row" id="pinSetup" hidden>
-            <input type="password" id="pin1" inputmode="numeric" maxlength="6" placeholder="New PIN" autocomplete="new-password" aria-label="New PIN">
-            <input type="password" id="pin2" inputmode="numeric" maxlength="6" placeholder="Repeat PIN" autocomplete="new-password" aria-label="Repeat PIN">
-            <button class="primary" type="button" id="pinSave" style="width:auto">Save PIN</button>
-            <button class="ghost" type="button" id="pinCancel">Cancel</button>
-          </div>
-          <div class="row" id="pinOff" hidden>
-            <input type="password" id="pinCur" inputmode="numeric" maxlength="6" placeholder="Current PIN" autocomplete="current-password" aria-label="Current PIN">
-            <button class="danger" type="button" id="pinOffYes">Turn off lock</button>
-            <button class="ghost" type="button" id="pinOffNo">Cancel</button>
-          </div>
-          <label class="switch" id="bioRow" hidden><input type="checkbox" id="bio"> Unlock with fingerprint</label>
-        </div>
-        <div class="setting">
-          <span class="label">Daily reminder</span>
           <div class="row">
             <label class="switch"><input type="checkbox" id="remind"> Remind me to log my spending at</label>
             <input type="time" id="remindTime" value="20:00" aria-label="Reminder time">
@@ -381,21 +336,6 @@ svg text { fill: var(--muted); font-family: var(--mono); font-size: 10px; }
         </div>
         <p class="small" id="dataMsg" role="status"></p>
       </section>
-    </div>
-  </div>
-</div>
-
-<div class="lock" id="lock" hidden role="dialog" aria-modal="true" aria-label="Unlock Pocket Ledger">
-  <div class="lock-box">
-    <h2>Pocket Ledger</h2>
-    <span class="small" id="lockMsg">Enter your PIN</span>
-    <div class="pin-dots" id="pinDots"></div>
-    <div class="keypad" id="keypad"></div>
-    <button class="linkbtn" type="button" id="forgot">Forgot PIN?</button>
-    <div class="confirm" id="forgotBox" hidden style="text-align:left">
-      <span>Resetting removes the lock and all data on this device. You can then load your last backup.</span>
-      <button class="danger" type="button" id="forgotYes">Reset app</button>
-      <button class="ghost" type="button" id="forgotNo">Cancel</button>
     </div>
   </div>
 </div>
@@ -503,7 +443,7 @@ svg text { fill: var(--muted); font-family: var(--mono); font-size: 10px; }
     $("sOut").textContent = money(exp - saved);
     $("sNet").textContent = money(inc - exp);
     $("sNet").className = "num " + (inc - exp >= 0 ? "in" : "out");
-    const goal = state.catBudgets.savings || 0;
+    const goal = 0;
     const pct = goal > 0 ? saved / goal : 0;
     $("sSave").textContent = money(saved);
     const bar = $("sSaveBar");
@@ -511,7 +451,7 @@ svg text { fill: var(--muted); font-family: var(--mono); font-size: 10px; }
     bar.style.width = Math.min(100, pct * 100) + "%";
     $("sSaveNote").textContent = goal > 0
       ? (saved >= goal ? "Goal reached: " + money(goal, { round: true }) : Math.round(pct * 100) + "% of your " + money(goal, { round: true }) + " goal")
-      : (inc > 0 ? Math.round(saved / inc * 100) + "% of your income" : "Set a goal next to Savings below");
+      : (inc > 0 ? Math.round(saved / inc * 100) + "% of your income" : "");
 
     // entries
     const cats = fType === "income" ? INC_CATS : fType === "expense" ? EXP_CATS : [...EXP_CATS, ...INC_CATS];
@@ -546,17 +486,6 @@ svg text { fill: var(--muted); font-family: var(--mono); font-size: 10px; }
     parts += `<text x="80" y="76" text-anchor="middle" style="font-size:9px">SPENT</text><text x="80" y="94" text-anchor="middle" style="font-size:13px;fill:var(--fg)">${money(exp, { round: true })}</text>`;
     svg.innerHTML = parts;
     $("legend").innerHTML = byCat.length ? byCat.map(c => `<li><span class="dot" style="background:var(${c.color})"></span><span>${c.name}</span><span class="num">${Math.round(c.total / exp * 100)}%</span></li>`).join("") : `<li class="small" style="display:block">No spending this month.</li>`;
-
-    // category budgets
-    $("budgetTotal").value = state.budget || "";
-    $("budgets").innerHTML = EXP_CATS.map(c => {
-      const spent = sum(m.filter(t => t.type === "expense" && t.cat === c.id));
-      const lim = state.catBudgets[c.id] || 0;
-      const p = lim ? spent / lim : 0;
-      return `<div class="brow"><span class="name"><span class="dot" style="background:var(${c.color})"></span>${c.name}</span>
-        <span class="small"><span class="num">${money(spent, { round: true })}</span> of <input id="cb-${c.id}" data-cat="${c.id}" inputmode="decimal" value="${lim || ""}" placeholder="no limit" aria-label="${c.name} limit"></span>
-        ${lim ? `<div class="meter"><i class="${p > 1 ? "over" : p > 0.85 ? "near" : ""}" style="width:${Math.min(100, p * 100)}%"></i></div>` : ""}</div>`;
-    }).join("");
 
     drawBars();
     renderDebts();
@@ -690,13 +619,6 @@ svg text { fill: var(--muted); font-family: var(--mono); font-size: 10px; }
     view = new Date(); view.setDate(1); render();
     dataMsg("Restored " + state.tx.length + " entries.", "ok");
   };
-  $("budgetTotal").onchange = e => { const n = parseAmt(e.target.value); state.budget = n > 0 ? n : 0; save(); render(); };
-  $("budgets").onchange = e => {
-    const c = e.target.dataset.cat; if (!c) return;
-    const n = parseAmt(e.target.value); if (n > 0) state.catBudgets[c] = n; else delete state.catBudgets[c];
-    save(); render();
-  };
-
   // ---- debts ----
   let debtDir = "owe", payingId = null;
   function setDebtDir(d) { debtDir = d; $("dirOwe").setAttribute("aria-pressed", d === "owe"); $("dirOwed").setAttribute("aria-pressed", d === "owed"); }
@@ -942,9 +864,6 @@ svg text { fill: var(--muted); font-family: var(--mono); font-size: 10px; }
       if (up) tips.push(["bad", "!", `You spent ${Math.round(up.pct * 100)}% more on ${up.c.name} than in ${prevName} (${money(up.now, { round: true })} vs ${money(up.before, { round: true })}).`]);
       if (down && down.now > 0) tips.push(["good", "✓", `Nice: ${Math.round(-down.pct * 100)}% less on ${down.c.name} than in ${prevName}.`]);
     }
-    const over = EXP_CATS.map(c => ({ c, spent: sum(m.filter(t => t.type === "expense" && t.cat === c.id)), lim: state.catBudgets[c.id] || 0 }))
-      .filter(x => x.c.id !== "savings" && x.lim && x.spent > x.lim).sort((a, b) => (b.spent - b.lim) - (a.spent - a.lim))[0];
-    if (over) tips.push(["bad", "!", `${over.c.name} is ${money(over.spent - over.lim, { round: true })} over its limit.`]);
     if (inc > 0 && exp + saved > inc) tips.push(["bad", "!", `You spent ${money(exp + saved - inc, { round: true })} more than you earned this month.`]);
     else if (inc > 0 && saved > 0) tips.push(["good", "✓", `You saved ${Math.round(saved / inc * 100)}% of your income this month.`]);
     else if (inc > 0 && saved === 0 && exp < inc) tips.push(["info", "i", `You have ${money(inc - exp, { round: true })} left. Moving some to savings now makes it easier to keep.`]);
@@ -960,112 +879,6 @@ svg text { fill: var(--muted); font-family: var(--mono); font-size: 10px; }
   const isNative = !!(CAP && CAP.isNativePlatform && CAP.isNativePlatform());
   const native = (plugin, method, opts) => CAP.nativePromise(plugin, method, opts || {});
   const setMsg = (t, k) => { $("setMsg").textContent = t; $("setMsg").className = "small " + (k || ""); };
-
-  // ---- app lock ----
-  const LOCK_KEY = "pocket-ledger-lock";
-  let lockCfg = null;
-  try { lockCfg = JSON.parse(localStorage.getItem(LOCK_KEY)); } catch (e) {}
-  const saveLock = () => { try { lockCfg ? localStorage.setItem(LOCK_KEY, JSON.stringify(lockCfg)) : localStorage.removeItem(LOCK_KEY); } catch (e) {} };
-  async function hashPin(pin) {
-    const salt = (lockCfg && lockCfg.salt) || uid() + uid();
-    let h;
-    try { const buf = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(salt + ":" + pin)); h = Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2, "0")).join(""); }
-    catch (e) { h = String([...(salt + pin)].reduce((a, c) => (a * 31 + c.charCodeAt(0)) >>> 0, 7)); }
-    return { salt, h };
-  }
-  let bioAvailable = false;
-  async function checkBio() {
-    if (!isNative) return false;
-    try { const r = await native("NativeBiometric", "isAvailable", {}); bioAvailable = !!(r && r.isAvailable); } catch (e) { bioAvailable = false; }
-    return bioAvailable;
-  }
-  function renderLockSettings() {
-    const on = !!(lockCfg && lockCfg.h);
-    $("lockState").textContent = on ? "On. The app asks for your PIN when you open it." : "Off. Anyone with your phone can open the app.";
-    $("lockActions").innerHTML = on
-      ? `<button class="ghost" type="button" data-lock="change">Change PIN</button><button class="ghost" type="button" data-lock="off">Turn off</button>`
-      : `<button class="primary" type="button" data-lock="set" style="width:auto">Set a PIN</button>`;
-    $("bioRow").hidden = !(on && bioAvailable);
-    $("bio").checked = !!(lockCfg && lockCfg.bio);
-  }
-  $("lockActions").onclick = e => {
-    const b = e.target.closest("[data-lock]"); if (!b) return;
-    $("pinSetup").hidden = true; $("pinOff").hidden = true; setMsg("");
-    if (b.dataset.lock === "off") { $("pinOff").hidden = false; $("pinCur").value = ""; $("pinCur").focus(); }
-    else { $("pinSetup").hidden = false; $("pin1").value = ""; $("pin2").value = ""; $("pin1").focus(); }
-  };
-  $("pinCancel").onclick = () => { $("pinSetup").hidden = true; };
-  $("pinOffNo").onclick = () => { $("pinOff").hidden = true; };
-  $("pinSave").onclick = async () => {
-    const a = $("pin1").value, b = $("pin2").value;
-    if (!/^\d{4,6}$/.test(a)) return setMsg("Use 4 to 6 digits for your PIN.", "bad");
-    if (a !== b) return setMsg("The two PINs don't match. Try again.", "bad");
-    const salt = uid() + uid();
-    lockCfg = { salt, bio: !!(lockCfg && lockCfg.bio) };
-    const r = await hashPin(a); lockCfg.h = r.h; lockCfg.len = a.length; saveLock();
-    $("pinSetup").hidden = true; renderLockSettings();
-    setMsg("PIN saved. The app is now locked when you open it.", "ok");
-  };
-  $("pinOffYes").onclick = async () => {
-    const r = await hashPin($("pinCur").value);
-    if (!lockCfg || r.h !== lockCfg.h) return setMsg("That PIN isn't right.", "bad");
-    lockCfg = null; saveLock(); $("pinOff").hidden = true; renderLockSettings(); setMsg("App lock is off.", "ok");
-  };
-  $("bio").onchange = async e => {
-    if (!lockCfg) return;
-    if (e.target.checked) {
-      try { await native("NativeBiometric", "verifyIdentity", { reason: "Turn on fingerprint unlock", title: "Pocket Ledger", negativeButtonText: "Cancel" }); lockCfg.bio = true; setMsg("Fingerprint unlock is on.", "ok"); }
-      catch (err) { e.target.checked = false; setMsg("Fingerprint wasn't confirmed, so it stays off.", "bad"); }
-    } else { lockCfg.bio = false; setMsg("Fingerprint unlock is off.", "ok"); }
-    saveLock();
-  };
-
-  // lock screen
-  let entered = "", locked = false, hiddenAt = 0;
-  const keys = ["1","2","3","4","5","6","7","8","9","bio","0","del"];
-  function drawKeypad() {
-    $("keypad").innerHTML = keys.map(k => k === "del" ? `<button type="button" class="fn" data-k="del" aria-label="Delete digit">⌫</button>`
-      : k === "bio" ? (lockCfg && lockCfg.bio && bioAvailable ? `<button type="button" class="fn" data-k="bio" aria-label="Use fingerprint">Finger</button>` : `<button type="button" class="blank" tabindex="-1" aria-hidden="true"></button>`)
-      : `<button type="button" data-k="${k}">${k}</button>`).join("");
-  }
-  function drawDots(len) { $("pinDots").innerHTML = Array.from({ length: Math.max(4, len) }, (_, i) => `<i class="${i < entered.length ? "on" : ""}"></i>`).join(""); }
-  function lockNow() {
-    if (!lockCfg || !lockCfg.h) return;
-    locked = true; entered = ""; $("lock").hidden = false; $("forgotBox").hidden = true;
-    $("lockMsg").textContent = "Enter your PIN"; drawKeypad(); drawDots(lockCfg.len || 4);
-    if (lockCfg.bio && bioAvailable) tryBio();
-  }
-  function unlock() { locked = false; entered = ""; $("lock").hidden = true; }
-  async function tryBio() {
-    try { await native("NativeBiometric", "verifyIdentity", { reason: "Unlock Pocket Ledger", title: "Pocket Ledger", negativeButtonText: "Use PIN" }); unlock(); } catch (e) {}
-  }
-  async function pressKey(k) {
-    if (!locked) return;
-    if (k === "bio") return tryBio();
-    if (k === "del") entered = entered.slice(0, -1); else entered += k;
-    const len = lockCfg.len || 4;
-    drawDots(len);
-    if (entered.length >= len) {
-      const r = await hashPin(entered);
-      if (r.h === lockCfg.h) return unlock();
-      entered = ""; $("lockMsg").textContent = "Wrong PIN. Try again."; const d = $("pinDots"); d.classList.remove("shake"); void d.offsetWidth; d.classList.add("shake"); drawDots(len);
-    }
-  }
-  $("keypad").onclick = e => { const b = e.target.closest("[data-k]"); if (b) pressKey(b.dataset.k); };
-  document.addEventListener("keydown", e => { if (!locked) return; if (/^\d$/.test(e.key)) pressKey(e.key); else if (e.key === "Backspace") pressKey("del"); });
-  $("forgot").onclick = () => { $("forgotBox").hidden = false; };
-  $("forgotNo").onclick = () => { $("forgotBox").hidden = true; };
-  $("forgotYes").onclick = () => {
-    lockCfg = null; saveLock();
-    state = { tx: [], debts: [], goals: [], currency: state.currency, budget: 0, catBudgets: {} }; save();
-    unlock(); renderLockSettings(); render();
-    setMsg("The app was reset. Use Restore from backup to load your data.", "ok");
-    $("restoreBtn").scrollIntoView({ block: "center" });
-  };
-  document.addEventListener("visibilitychange", () => {
-    if (document.hidden) hiddenAt = Date.now();
-    else if (lockCfg && lockCfg.h && !locked && hiddenAt && Date.now() - hiddenAt > 60000) lockNow();
-  });
 
   // ---- daily reminder ----
   const REM_KEY = "pocket-ledger-reminder";
@@ -1096,9 +909,7 @@ svg text { fill: var(--muted); font-family: var(--mono); font-size: 10px; }
   $("date").value = todayStr();
   setType("expense");
   render();
-  renderLockSettings();
-  if (lockCfg && lockCfg.h) lockNow();
-  checkBio().then(() => { renderLockSettings(); if (locked) { drawKeypad(); if (lockCfg && lockCfg.bio && bioAvailable) tryBio(); } });
+  try { localStorage.removeItem("pocket-ledger-lock"); } catch (e) {}
 })();
 </script>
 </body>
