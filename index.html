@@ -84,6 +84,16 @@ form.add input, form.add select { width: 100%; border: 1px solid var(--line); ba
 .seg button[aria-pressed="true"].i { background: var(--income); color: var(--surface); }
 .primary { background: var(--accent); color: var(--surface); border: 0; border-radius: 8px; padding: 9px 14px; font-weight: 600; width: 100%; }
 .primary:hover { filter: brightness(1.08); }
+.quick { display: grid; gap: 6px; }
+.quick-row { display: flex; gap: 8px; align-items: center; }
+.quick-row input { flex: 1; min-width: 0; border: 1px solid var(--line); background: var(--bg); border-radius: 8px; padding: 9px 12px; }
+.mic { flex: none; width: 44px; height: 44px; border-radius: 50%; border: 0; background: var(--accent); color: var(--surface); display: grid; place-items: center; }
+.mic.on { background: var(--expense); animation: pulse 1.2s ease-in-out infinite; }
+@keyframes pulse { 50% { box-shadow: 0 0 0 8px var(--accent-soft); } }
+@media (prefers-reduced-motion: reduce) { .mic.on { animation: none; } }
+#quickMsg.ok { color: var(--income); } #quickMsg.bad { color: var(--expense); }
+.or { display: flex; align-items: center; gap: 10px; color: var(--muted); font-size: 0.8rem; }
+.or::before, .or::after { content: ""; flex: 1; height: 1px; background: var(--line); }
 .err { color: var(--expense); font-size: 0.85rem; min-height: 1.2em; margin: -4px 0 0; }
 
 .list { list-style: none; margin: 0; padding: 0; display: grid; }
@@ -153,6 +163,18 @@ svg text { fill: var(--muted); font-family: var(--mono); font-size: 10px; }
     <div style="display:grid;gap:20px;min-width:0">
       <section class="panel">
         <h2>Add an entry</h2>
+        <form class="quick" id="quickForm" novalidate>
+          <label class="label" for="quick">Say it or type it</label>
+          <div class="quick-row">
+            <button type="button" class="mic" id="mic" aria-label="Speak an entry" title="Speak an entry">
+              <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path fill="currentColor" d="M12 14a3 3 0 0 0 3-3V5a3 3 0 0 0-6 0v6a3 3 0 0 0 3 3Zm5-3a5 5 0 0 1-10 0H5a7 7 0 0 0 6 6.92V21h2v-3.08A7 7 0 0 0 19 11h-2Z"/></svg>
+            </button>
+            <input id="quick" placeholder="Spent 25 on groceries yesterday" autocomplete="off" enterkeyhint="done">
+            <button class="primary" type="submit" style="width:auto">Add</button>
+          </div>
+          <p class="small" id="quickMsg">Tap the mic and say something like “paid 40 for taxi” or “got 3200 salary”.</p>
+        </form>
+        <div class="or"><span>or fill in the details</span></div>
         <form class="add" id="addForm" novalidate>
           <div class="f f-type">
             <div class="seg" role="group" aria-label="Entry type">
@@ -399,6 +421,94 @@ svg text { fill: var(--muted); font-family: var(--mono); font-size: 10px; }
     const c = e.target.dataset.cat; if (!c) return;
     const n = parseAmt(e.target.value); if (n > 0) state.catBudgets[c] = n; else delete state.catBudgets[c];
     save(); render();
+  };
+
+  // ---- quick add: speak or type a sentence ----
+  const KW = {
+    housing: ["rent", "mortgage", "housing", "landlord", "apartment"],
+    groceries: ["grocer", "supermarket", "market", "food shop", "vegetable", "fruit", "bread", "milk"],
+    transport: ["taxi", "uber", "bus", "train", "metro", "fuel", "gas station", "petrol", "parking", "transport", "car", "ticket to"],
+    eating: ["restaurant", "lunch", "dinner", "breakfast", "coffee", "cafe", "pizza", "burger", "takeaway", "eating out", "drinks"],
+    bills: ["bill", "electric", "water", "internet", "phone", "wifi", "utilit", "subscription", "insurance"],
+    health: ["pharmacy", "doctor", "medicine", "dentist", "hospital", "gym", "health"],
+    fun: ["movie", "cinema", "concert", "game", "clothes", "shoes", "shopping", "gift for", "book", "netflix", "spotify"],
+    salary: ["salary", "paycheck", "wage", "payday"],
+    freelance: ["freelance", "client", "side job", "side income", "design job", "sold"],
+    gift: ["gift", "present"],
+  };
+  const INCOME_WORDS = ["earned", "got paid", "received", "income", "salary", "paycheck", "wage", "paid me", "refund", "sold", "bonus", "got "];
+  function parseEntry(text) {
+    const s = " " + text.toLowerCase().replace(/[“”"]/g, "") + " ";
+    const m = s.match(/(\d+(?:[.,]\d{1,2})?)/);
+    if (!m) return null;
+    const amount = Math.round(parseFloat(m[1].replace(",", ".")) * 100) / 100;
+    if (!(amount > 0)) return null;
+    const spendWords = /\b(spent|spend|paid for|paid|bought|buy|cost|for)\b/;
+    let t = INCOME_WORDS.some(w => s.includes(w)) && !/\b(spent|bought|paid for)\b/.test(s) ? "income" : "expense";
+    if (t === "income" && /\bgot\b/.test(s) && !/\b(salary|paid|bonus|refund|income|money)\b/.test(s) && spendWords.test(s)) t = "expense";
+    const pool = t === "income" ? ["salary", "freelance", "gift"] : EXP_CATS.map(c => c.id);
+    let cat = pool.find(id => (KW[id] || []).some(k => s.includes(k))) || (t === "income" ? "other-in" : "other");
+    if (t === "expense" && cat === "other" && /\bgift\b/.test(s)) cat = "fun";
+    const d = new Date();
+    if (/\byesterday\b/.test(s)) d.setDate(d.getDate() - 1);
+    const date = d.getFullYear() + "-" + pad(d.getMonth() + 1) + "-" + pad(d.getDate());
+    let note = text.replace(m[1], "")
+      .replace(/\b(i |I )?(spent|spend|paid for|paid|bought|got paid|got|earned|received|cost|on|for|of|yesterday|today|dollars?|euros?|pounds?|dinars?|dirhams?|riyals?|bucks|usd|eur|gbp|tnd|mad|aed|sar|cad)\b/gi, " ")
+      .replace(/[$€£]/g, "").replace(/\s+/g, " ").trim();
+    note = note ? note[0].toUpperCase() + note.slice(1) : catOf(cat).name;
+    return { type: t, cat, amount, date, note };
+  }
+  function quickAdd(text) {
+    const msg = $("quickMsg");
+    const e = parseEntry(text || "");
+    if (!e) { msg.className = "small bad"; msg.textContent = "I couldn't find an amount. Try “spent 25 on groceries”."; return; }
+    state.tx.push({ id: uid(), ...e });
+    save();
+    const d = new Date(e.date + "T00:00:00"); view = new Date(d.getFullYear(), d.getMonth(), 1);
+    render();
+    $("quick").value = "";
+    msg.className = "small ok";
+    msg.textContent = "Added: " + e.note + ", " + catOf(e.cat).name + ", " + (e.type === "income" ? "+" : "−") + money(e.amount) + ". Wrong? Tap × on it below.";
+  }
+  $("quickForm").onsubmit = ev => { ev.preventDefault(); quickAdd($("quick").value); };
+
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  let rec = null, listening = false;
+  function micFallback(reason) {
+    const msg = $("quickMsg");
+    msg.className = "small";
+    msg.textContent = (reason || "Voice isn't available here.") + " Tap the box and use the mic on your phone's keyboard instead.";
+    $("quick").focus();
+  }
+  $("mic").onclick = () => {
+    if (!SR) return micFallback();
+    if (listening && rec) { rec.stop(); return; }
+    try {
+      rec = new SR();
+      rec.lang = navigator.language || "en-US";
+      rec.interimResults = true;
+      rec.maxAlternatives = 1;
+      let finalText = "";
+      rec.onstart = () => { listening = true; $("mic").classList.add("on"); $("quickMsg").className = "small"; $("quickMsg").textContent = "Listening…"; };
+      rec.onresult = ev => {
+        let txt = "";
+        for (const r of ev.results) { txt += r[0].transcript; if (r.isFinal) finalText = txt; }
+        $("quick").value = txt;
+      };
+      rec.onerror = ev => {
+        listening = false; $("mic").classList.remove("on");
+        if (ev.error === "not-allowed" || ev.error === "service-not-allowed") micFallback("The microphone is blocked here.");
+        else if (ev.error === "no-speech") { $("quickMsg").className = "small"; $("quickMsg").textContent = "I didn't hear anything. Tap the mic and try again."; }
+        else micFallback();
+      };
+      rec.onend = () => {
+        const wasListening = listening;
+        listening = false; $("mic").classList.remove("on");
+        const said = finalText || $("quick").value;
+        if (wasListening && said.trim()) quickAdd(said);
+      };
+      rec.start();
+    } catch (err) { listening = false; $("mic").classList.remove("on"); micFallback(); }
   };
 
   $("date").value = todayStr();
