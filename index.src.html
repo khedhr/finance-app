@@ -36,7 +36,13 @@
 }
 * { box-sizing: border-box; }
 [hidden] { display: none !important; }
-body { background: var(--bg); color: var(--fg); font-family: var(--body); font-size: 15px; line-height: 1.5; }
+body { background: var(--bg); color: var(--fg); font-family: var(--body); font-size: 0.9375rem; line-height: 1.5; }
+html { font-size: 16px; } html[data-text="large"] { font-size: 18px; } html[data-text="xl"] { font-size: 20px; }
+.rate-big { font-family: var(--mono); font-size: 1.25rem; font-weight: 600; margin: 0; }
+.conv { display: grid; grid-template-columns: minmax(0,1fr) auto minmax(0,1fr); gap: 8px; align-items: center; }
+.conv label { display: grid; gap: 4px; font-size: .8rem; color: var(--muted); font-weight: 600; letter-spacing: .04em; }
+.conv input, #myRate { border: 1px solid var(--line); background: var(--field); color: var(--fg); border-radius: 8px; padding: 8px 10px; font-family: var(--mono); width: 100%; box-sizing: border-box; }
+#myRate { width: 9em; }
 html, body { height: 100%; }
 body { margin: 0; }
 .wrap { display: flex; min-height: 100%; }
@@ -393,6 +399,12 @@ svg text { fill: var(--muted); font-family: var(--mono); font-size: 10px; }
           <button type="button" class="a" data-theme-opt="dark" aria-pressed="false">Dark</button>
           <button type="button" class="a" data-theme-opt="auto" aria-pressed="false">Same as phone</button>
         </div>
+        <p class="small" style="margin:14px 0 6px;font-weight:600">Text size</p>
+        <div class="seg" role="group" aria-label="Text size">
+          <button type="button" class="a" data-text-opt="normal" aria-pressed="true">Normal</button>
+          <button type="button" class="a" data-text-opt="large" aria-pressed="false">Large</button>
+          <button type="button" class="a" data-text-opt="xl" aria-pressed="false">Extra large</button>
+        </div>
       </section>
 
       <section class="panel">
@@ -415,6 +427,21 @@ svg text { fill: var(--muted); font-family: var(--mono); font-size: 10px; }
         <select id="currency" aria-label="Currency" style="width:fit-content">
           <option value="USD">$ US dollar</option><option value="IQD">IQD Iraqi dinar</option>
         </select>
+      </section>
+
+      <section class="panel">
+        <div class="panel-head"><h2>Dollar rate</h2><button class="ghost" type="button" id="rateRefresh" style="width:auto;padding:4px 10px;font-size:.85rem">Refresh</button></div>
+        <p class="rate-big" id="rateBig">1 USD = … IQD</p>
+        <p class="small" id="rateNote" style="margin:2px 0 12px">Getting today's rate…</p>
+        <div class="conv">
+          <label>US DOLLAR<input id="convUsd" inputmode="decimal" placeholder="100"></label>
+          <span aria-hidden="true" style="margin-top:18px">=</span>
+          <label>IRAQI DINAR<input id="convIqd" inputmode="decimal" placeholder="0"></label>
+        </div>
+        <div class="setting" style="margin-top:14px">
+          <div class="row"><span class="small" style="font-weight:600">My rate</span><input id="myRate" inputmode="decimal" placeholder="e.g. 1,450" aria-label="My dollar rate in IQD"></div>
+          <span class="small">Type the market rate if it's different from the official one. Leave it empty to use the official rate.</span>
+        </div>
       </section>
 
       <section class="panel" id="aiKeyPanel">
@@ -477,6 +504,17 @@ svg text { fill: var(--muted); font-family: var(--mono); font-size: 10px; }
     document.querySelectorAll("[data-theme-opt]").forEach(b => b.setAttribute("aria-pressed", b.dataset.themeOpt === themePref));
   }
   applyTheme();
+  const TEXT_KEY = "pocket-ledger-text";
+  let textPref = "normal"; try { textPref = localStorage.getItem(TEXT_KEY) || "normal"; } catch (e) {}
+  function applyText() {
+    textPref === "normal" ? document.documentElement.removeAttribute("data-text") : document.documentElement.setAttribute("data-text", textPref);
+    document.querySelectorAll("[data-text-opt]").forEach(b => b.setAttribute("aria-pressed", b.dataset.textOpt === textPref));
+  }
+  applyText();
+  document.addEventListener("click", e => {
+    const b = e.target.closest("[data-text-opt]"); if (!b) return;
+    textPref = b.dataset.textOpt; try { localStorage.setItem(TEXT_KEY, textPref); } catch (e) {} applyText();
+  });
   document.addEventListener("click", e => {
     const b = e.target.closest("[data-theme-opt]"); if (!b) return;
     themePref = b.dataset.themeOpt; try { localStorage.setItem(THEME_KEY, themePref); } catch (e2) {}
@@ -773,6 +811,49 @@ svg text { fill: var(--muted); font-family: var(--mono); font-size: 10px; }
     catMsg("Added " + name + ".", "ok");
   };
   drawCats();
+
+  // ---- dollar rate ----
+  const RATE_KEY = "pocket-ledger-rate";
+  let rateInfo = {}; try { rateInfo = JSON.parse(localStorage.getItem(RATE_KEY)) || {}; } catch (e) {}
+  const num = v => { const n = parseFloat(String(v).replace(/[,\s]/g, "")); return n > 0 ? n : 0; };
+  const fmt = (n, d) => n.toLocaleString(undefined, { maximumFractionDigits: d });
+  const curRate = () => num(rateInfo.mine) || rateInfo.official || 0;
+  function drawRate() {
+    const r = curRate();
+    $("rateBig").textContent = "1 USD = " + (r ? fmt(r, 0) : "…") + " IQD";
+    const when = rateInfo.at ? new Date(rateInfo.at).toLocaleDateString(undefined, { month: "short", day: "numeric" }) : "";
+    $("rateNote").textContent = num(rateInfo.mine) ? "Your rate." + (rateInfo.official ? " Official rate: " + fmt(rateInfo.official, 0) + (when ? " (" + when + ")" : "") + "." : "")
+      : rateInfo.official ? "Official rate, updated " + when + "." : rateInfo.failed ? "Couldn't get today's rate. Check your internet, or type your own rate below." : "Getting today's rate…";
+    if (document.activeElement !== $("myRate")) $("myRate").value = rateInfo.mine || "";
+    convert(convFrom);
+  }
+  let convFrom = "usd";
+  function convert(from) {
+    convFrom = from; const r = curRate(); if (!r) return;
+    if (from === "usd") { const v = num($("convUsd").value); $("convIqd").value = v ? fmt(Math.round(v * r), 0) : ""; }
+    else { const v = num($("convIqd").value); $("convUsd").value = v ? fmt(v / r, 2) : ""; }
+  }
+  async function fetchRate(force) {
+    if (!force && rateInfo.official && Date.now() - (rateInfo.at || 0) < 12 * 3600e3) return drawRate();
+    const srcs = [
+      ["https://open.er-api.com/v6/latest/USD", d => d && d.rates && d.rates.IQD],
+      ["https://cdn.jsdelivr.net/npm/@fawazahmed0/currency-api@latest/v1/currencies/usd.json", d => d && d.usd && d.usd.iqd],
+      ["https://latest.currency-api.pages.dev/v1/currencies/usd.json", d => d && d.usd && d.usd.iqd],
+    ];
+    for (const [url, pick] of srcs) {
+      try {
+        const r = await fetchT(url, {}, 8000); if (!r.ok) continue;
+        const v = Number(pick(await r.json()));
+        if (v > 100) { rateInfo = { ...rateInfo, official: Math.round(v * 100) / 100, at: Date.now(), failed: false }; try { localStorage.setItem(RATE_KEY, JSON.stringify(rateInfo)); } catch (e) {} return drawRate(); }
+      } catch (e) {}
+    }
+    if (!rateInfo.official) rateInfo.failed = true; drawRate();
+  }
+  $("convUsd").oninput = () => convert("usd");
+  $("convIqd").oninput = () => convert("iqd");
+  $("myRate").oninput = () => { rateInfo.mine = $("myRate").value.trim(); try { localStorage.setItem(RATE_KEY, JSON.stringify(rateInfo)); } catch (e) {} drawRate(); };
+  $("rateRefresh").onclick = () => { $("rateNote").textContent = "Getting today's rate…"; fetchRate(true); };
+  drawRate();
 
   // ---- backup & restore ----
   const dataMsg = (text, kind) => { $("dataMsg").textContent = text; $("dataMsg").className = "small " + (kind || ""); };
@@ -1143,6 +1224,7 @@ Rules: amounts are plain numbers ("25k" = 25000, "2 million" = 2000000). Resolve
     $("monthCtl").hidden = !(page === "entries" || page === "charts");
     closeSide();
     if (page === "chat") drawChat();
+    if (page === "app-settings") fetchRate(false);
     window.scrollTo(0, page === "chat" ? document.body.scrollHeight : 0);
   }
   function openSide() { $("side").classList.add("open"); $("scrim").hidden = false; }
