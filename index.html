@@ -94,7 +94,7 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
 .chips { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; margin-top: 6px; }
 .chip { border: 1px solid var(--line); background: var(--surface); border-radius: 99px; padding: 7px 14px; font-size: 0.9rem; color: var(--muted); }
 .chip:hover { border-color: var(--accent); color: var(--fg); }
-.chat-log { list-style: none; margin: auto 0 0; padding: 8px 0 0; display: flex; flex-direction: column; gap: 14px; align-self: end; min-width: 0; }
+.chat-log { list-style: none; margin: auto 0 0; padding: 8px 0 0; display: flex; flex-direction: column; gap: 14px; align-self: stretch; min-width: 0; }
 .msg { max-width: 85%; line-height: 1.5; overflow-wrap: anywhere; }
 .msg.me { align-self: flex-end; background: var(--side-active); padding: 9px 14px; border-radius: 18px 18px 4px 18px; }
 .msg.app { align-self: flex-start; display: flex; gap: 10px; align-items: flex-start; }
@@ -119,6 +119,26 @@ h2 { font-size: 1.1rem; font-weight: 700; }
 .label { font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); font-weight: 600; }
 button, input, select { font: inherit; color: inherit; }
 button { cursor: pointer; }
+/* ---- smooth feel ---- */
+html { -webkit-tap-highlight-color: transparent; }
+button, a, input, select, label { touch-action: manipulation; }
+input, select, textarea { font-size: max(16px, 1em); }
+body { transition: background-color .25s ease, color .25s ease; }
+button, .nav, .chip, .seg button { transition: background-color .15s ease, color .15s ease, border-color .15s ease, transform .12s ease, opacity .15s ease; }
+button:active:not(:disabled), .nav:active, .chip:active { transform: scale(.96); }
+button:disabled { opacity: .55; cursor: default; }
+.page:not([hidden]) { animation: pageIn .22s ease-out; }
+@keyframes pageIn { from { opacity: 0; transform: translateY(6px); } }
+.msg.new { animation: msgIn .25s ease-out; }
+@keyframes msgIn { from { opacity: 0; transform: translateY(8px) scale(.98); } }
+.msg.typing span::after { content: ""; display: inline-block; width: 1.2em; text-align: left; animation: dots 1.2s steps(4, end) infinite; }
+.msg.typing span { animation: breathe 1.4s ease-in-out infinite; }
+@keyframes dots { 0% { content: ""; } 25% { content: "."; } 50% { content: ".."; } 75%, 100% { content: "..."; } }
+@keyframes breathe { 50% { opacity: .55; } }
+.msg.typing::before { animation: breathe 1.4s ease-in-out infinite; }
+.scrim:not([hidden]) { animation: fadeIn .2s ease-out; }
+@keyframes fadeIn { from { opacity: 0; } }
+@media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation: none !important; transition: none !important; } }
 :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 
 .month { display: flex; align-items: center; gap: 4px; flex: none; }
@@ -1210,13 +1230,14 @@ Rules: amounts are plain numbers ("25k" = 25000, "2 million" = 2000000). Resolve
   }
   function addMsg(who, text, bad) {
     chat.push({ who, text, bad: !!bad }); saveChat(); drawChat();
+    const last = $("chatLog").lastElementChild; if (last) last.classList.add("new");
     requestAnimationFrame(() => window.scrollTo({ top: document.body.scrollHeight, behavior: "smooth" }));
   }
   async function sendChat(text) {
     text = (text || "").trim(); if (!text) return;
     $("quick").value = ""; $("quick").placeholder = "Tell me what you spent or earned…";
     addMsg("me", text);
-    const li = document.createElement("li"); li.className = "msg app typing"; li.innerHTML = "<span>Thinking…</span>"; $("chatLog").appendChild(li);
+    const li = document.createElement("li"); li.className = "msg app typing"; li.className += " new"; li.innerHTML = "<span>Thinking</span>"; $("chatLog").appendChild(li);
     $("quickMsg").textContent = ""; $("quickMsg").className = "";
     await quickAdd(text);
     li.remove();
