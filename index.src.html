@@ -54,7 +54,7 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
 .ico { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; flex: none; }
 .iconbtn.plain { border: 0; background: transparent; display: grid; place-items: center; color: var(--fg); }
 .iconbtn.plain:hover { background: var(--side-hover); }
-.side { width: 260px; flex: none; background: var(--side); color: var(--side-fg); display: flex; flex-direction: column; gap: 4px; padding: 12px 10px; padding-top: calc(12px + env(safe-area-inset-top, 0px)); padding-left: max(10px, env(safe-area-inset-left, 0px)); position: sticky; top: 0; height: 100vh; height: 100dvh; overflow-y: auto; }
+.side { width: 260px; flex: none; background: var(--side); color: var(--side-fg); display: flex; flex-direction: column; gap: 4px; padding: 12px 10px; padding-top: calc(12px + env(safe-area-inset-top, 0px)); padding-left: max(10px, env(safe-area-inset-left, 0px)); position: sticky; top: 0; height: 100vh; height: var(--app-h, 100dvh); overflow-y: auto; }
 .side-top { display: flex; align-items: center; justify-content: space-between; padding: 2px 4px 10px 8px; }
 .brand { display: flex; align-items: center; gap: 8px; font-family: var(--display); font-weight: 700; font-size: 1.05rem; }
 .brand-dot { width: 18px; height: 18px; border-radius: 6px; background: var(--accent); box-shadow: inset 0 -6px 0 var(--surface-dim); }
@@ -72,8 +72,12 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
   #sideClose { display: grid; }
 }
 @media (prefers-reduced-motion: reduce) { .side { transition: none; } }
-.chatpage { min-height: calc(100dvh - 60px); display: flex; flex-direction: column; gap: 0; padding-bottom: 0; }
+.chatpage { min-height: calc(var(--app-h, 100dvh) - 60px); display: flex; flex-direction: column; gap: 0; padding-bottom: 0; }
 .chatpage[hidden] { display: none !important; }
+html.embedded .chatpage { height: calc(var(--app-h, 100dvh) - 60px); min-height: 0; overflow: hidden; }
+html.embedded .chat-log { flex: 1 1 auto; min-height: 0; overflow-y: auto; margin: 0; overscroll-behavior: contain; }
+html.embedded .chat-log > :first-child { margin-top: auto; }
+html.embedded .chat-empty { flex: 1 1 auto; min-height: 0; overflow-y: auto; }
 .chat-log:empty { display: none; }
 .chat-empty { margin: auto 0; display: grid; justify-items: center; gap: 10px; text-align: center; padding: 24px 0; }
 .hello-mark { width: 44px; height: 44px; border-radius: 14px; background: var(--accent); position: relative; }
@@ -511,6 +515,20 @@ svg text { fill: var(--muted); font-family: var(--mono); font-size: 10px; }
 <script>
 (() => {
   // ---- theme ----
+  // Inside an embedded frame (like the Claude app on iPhone) the frame can grow with its content,
+  // so height units feed back on themselves. Pin the app height to a fixed pixel value there.
+  let embedded = false; try { embedded = window.self !== window.top; } catch (e) { embedded = true; }
+  if (embedded) {
+    const pin = () => { const h = Math.min(window.innerHeight || 700, (screen && screen.height) || 900, 1200); document.documentElement.style.setProperty("--app-h", h + "px"); };
+    pin();
+  }
+  if (embedded) document.documentElement.classList.add("embedded");
+  // Never scroll the outer page from inside a frame: in a frame the chat scrolls inside its own box.
+  function toBottom(smooth) {
+    const log = document.getElementById("chatLog");
+    if (embedded) { if (log) log.scrollTo({ top: log.scrollHeight, behavior: smooth ? "smooth" : "auto" }); return; }
+    window.scrollTo({ top: document.body.scrollHeight, behavior: smooth ? "smooth" : "auto" });
+  }
   const THEME_KEY = "pocket-ledger-theme", hostTheme = document.documentElement.getAttribute("data-theme");
   let themePref = "light"; try { themePref = localStorage.getItem(THEME_KEY) || "light"; } catch (e) {}
   function applyTheme() {
@@ -1217,7 +1235,7 @@ Rules: amounts are plain numbers ("25k" = 25000, "2 million" = 2000000). Resolve
   function addMsg(who, text, bad) {
     chat.push({ who, text, bad: !!bad }); saveChat(); drawChat();
     const last = $("chatLog").lastElementChild; if (last) last.classList.add("new");
-    requestAnimationFrame(() => window.scrollTo({ top: document.body.scrollHeight, behavior: "smooth" }));
+    requestAnimationFrame(() => toBottom(true));
   }
   async function sendChat(text) {
     text = (text || "").trim(); if (!text) return;
@@ -1246,7 +1264,7 @@ Rules: amounts are plain numbers ("25k" = 25000, "2 million" = 2000000). Resolve
     closeSide();
     if (page === "chat") drawChat();
     if (page === "app-settings") fetchRate(false);
-    window.scrollTo(0, page === "chat" ? document.body.scrollHeight : 0);
+    page === "chat" ? toBottom(false) : window.scrollTo(0, 0);
   }
   function openSide() { $("side").classList.add("open"); $("scrim").hidden = false; }
   function closeSide() { $("side").classList.remove("open"); $("scrim").hidden = true; }
