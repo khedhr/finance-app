@@ -617,7 +617,75 @@ svg text { fill: var(--muted); font-family: var(--mono); font-size: 10px; }
   if (!Array.isArray(state.debts)) state.debts = [];
   if (state.currency !== "USD" && state.currency !== "IQD") state.currency = "USD";
   if (!Array.isArray(state.goals)) state.goals = [];
-  const save = () => { try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) {} };
+  // ---- sync: the same ledger on every device you sign in on ----
+  let syncRef = null, syncReady = false, syncWriting = false, syncDirty = false;
+  const keepLocal = () => { try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) {} };
+  const save = () => { state.updatedAt = Date.now(); keepLocal(); pushRemote(); };
+  function setSync(k) {
+    const el = document.getElementById("sideFoot"); if (!el) return;
+    el.textContent = { ok: "Synced across your devices", wait: "Syncing…", slow: "Can't reach sync right now. Changes are kept on this device.", bad: "Sync failed. Changes are kept on this device.", off: "Saved on this device only" }[k] || "";
+  }
+  async function pushRemote() {
+    if (!syncRef || !syncReady) return;
+    if (syncWriting) { syncDirty = true; return; }
+    syncWriting = true; setSync("wait");
+    try { await syncRef.set(JSON.parse(JSON.stringify(state))); setSync("ok"); } catch (e) { setSync("bad"); }
+    syncWriting = false;
+    if (syncDirty) { syncDirty = false; pushRemote(); }
+  }
+  function normalize(s) {
+    s = JSON.parse(JSON.stringify(s));
+    if (!Array.isArray(s.tx)) s.tx = [];
+    if (!Array.isArray(s.debts)) s.debts = [];
+    if (!Array.isArray(s.goals)) s.goals = [];
+    if (s.currency !== "USD" && s.currency !== "IQD") s.currency = "IQD";
+    return s;
+  }
+  function adopt(r) {
+    state = normalize(r); state.synced = true; keepLocal();
+    buildCats(); fillCats(); drawCats(); render();
+  }
+  // first sync on a device: keep anything typed here that the synced ledger doesn't have yet
+  function mergeLocal(r) {
+    if (state.synced) return { s: r, changed: false };
+    const s = normalize(r); let changed = false;
+    for (const t of state.tx) {
+      if (t.sample) continue;
+      if (s.tx.some(x => x.id === t.id || (x.date === t.date && x.type === t.type && x.amount === t.amount))) continue;
+      s.tx.push(t); changed = true;
+    }
+    for (const d of state.debts) if (!s.debts.some(x => x.id === d.id || (x.who.toLowerCase() === d.who.toLowerCase() && x.amount === d.amount))) { s.debts.push(d); changed = true; }
+    for (const g of state.goals) if (!s.goals.some(x => x.id === g.id || x.name.toLowerCase() === g.name.toLowerCase())) { s.goals.push(g); changed = true; }
+    if (changed) s.updatedAt = Date.now();
+    return { s, changed };
+  }
+  async function startSync() {
+    let db = null;
+    try { db = window.claude && window.claude.use ? await window.claude.use("db") : null; } catch (e) { db = null; }
+    if (!db) { setSync("off"); return; }
+    setSync("wait");
+    syncRef = db.doc("ledger/main");
+    let first = true;
+    const timer = setTimeout(() => setSync("slow"), 10000);
+    syncRef.onSnapshot(snap => {
+      if (!snap.fromCache) clearTimeout(timer);
+      if (snap.hasPendingWrites) return;
+      const r = snap.exists ? snap.data() : null;
+      if (first) {
+        if (!r && snap.fromCache) return; // wait for the server's answer before treating it as empty
+        first = false; syncReady = true;
+        if (!r || !Array.isArray(r.tx)) {
+          if (!state.tx.some(t => !t.sample) && !state.debts.length && !state.goals.length) { setSync("ok"); return; }
+          state.synced = true; save(); return;
+        }
+        const m = mergeLocal(r); adopt(m.s);
+        if (m.changed) pushRemote(); else setSync("ok");
+        return;
+      }
+      if (r && Array.isArray(r.tx) && (r.updatedAt || 0) > (state.updatedAt || 0)) adopt(r);
+      if (!snap.fromCache) setSync("ok");
+    }, () => { clearTimeout(timer); setSync("bad"); });
+  }
   // ---- categories (built-in + your own) ----
   const PALETTE = ["--c1", "--c2", "--c3", "--c4", "--c5", "--c6", "--c7", "--c8", "--c9", "--c10", "--c11", "--c12", "--c13", "--c14"];
   const LOCKED = ["savings", "debt", "other", "repaid", "other-in"];
@@ -1364,12 +1432,12 @@ Rules: amounts are plain numbers ("25k" = 25000, "2 million" = 2000000). Resolve
     const total = sum(state.goals.map(g => ({ amount: g.saved })));
     $("goalsNote").textContent = state.goals.length ? money(total, { round: true }) + " saved in total" : "";
     $("goals").innerHTML = state.goals.length ? state.goals.map(g => {
-      const p = g.saved / g.target, done = p >= 1;
-      return `<li><div class="top"><b>${done ? '<span class="pill reached">Reached</span>' : ""}${esc(g.name)}</b><span class="num">${money(g.saved, { round: true })} <span class="small">/ ${money(g.target, { round: true })}</span></span></div>
-        <div class="meter"><i style="width:${Math.min(100, p * 100)}%"></i></div>
+      const open = !(g.target > 0), p = open ? 0 : g.saved / g.target, done = !open && p >= 1;
+      return `<li><div class="top"><b>${done ? '<span class="pill reached">Reached</span>' : ""}${esc(g.name)}</b><span class="num">${money(g.saved, { round: true })}${open ? "" : ` <span class="small">/ ${money(g.target, { round: true })}</span>`}</span></div>
+        ${open ? "" : `<div class="meter"><i style="width:${Math.min(100, p * 100)}%"></i></div>`}
         <div class="acts">${fundingId === g.id
           ? `<input id="fundAmt" inputmode="decimal" placeholder="Amount" aria-label="Amount to add"><button class="primary" style="width:auto;padding:5px 12px" data-act="fundsave" data-id="${g.id}">Add</button><button class="ghost" data-act="fundcancel">Cancel</button>`
-          : `${done ? "" : `<button class="ghost" data-act="fund" data-id="${g.id}">Add money</button>`}<span class="small">${done ? "You did it!" : Math.round(p * 100) + "% there, " + money(g.target - g.saved, { round: true }) + " to go"}</span><button class="del" data-act="del" data-id="${g.id}" aria-label="Delete goal" title="Delete" style="margin-left:auto">×</button>`}</div></li>`;
+          : `${done ? "" : `<button class="ghost" data-act="fund" data-id="${g.id}">Add money</button>`}<span class="small">${open ? "No target set" : done ? "You did it!" : Math.round(p * 100) + "% there, " + money(g.target - g.saved, { round: true }) + " to go"}</span><button class="del" data-act="del" data-id="${g.id}" aria-label="Delete goal" title="Delete" style="margin-left:auto">×</button>`}</div></li>`;
     }).join("") : `<li class="small">No goals yet. Add something you're saving for, like a car or a trip.</li>`;
     if (fundingId && $("fundAmt")) $("fundAmt").focus();
   }
@@ -1427,5 +1495,7 @@ Rules: amounts are plain numbers ("25k" = 25000, "2 million" = 2000000). Resolve
   render();
   go(location.hash.slice(1) || "chat");
   try { localStorage.removeItem("pocket-ledger-lock"); } catch (e) {}
+  startSync();
 })();
 </script>
+
