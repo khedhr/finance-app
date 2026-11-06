@@ -158,7 +158,15 @@ select { border: 1px solid var(--line); background: var(--surface); border-radiu
 .banner { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; justify-content: space-between; background: var(--accent-soft); border-radius: 10px; padding: 10px 14px; font-size: 0.92rem; }
 .linkbtn { background: none; border: 0; color: var(--accent); font-weight: 600; text-decoration: underline; padding: 0; }
 
-.summary { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 12px; }
+.summary { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 12px; align-items: start; }
+.err:empty { display: none; }
+a { color: var(--accent); }
+.toast { position: fixed; left: 50%; bottom: calc(96px + env(safe-area-inset-bottom, 0px)); transform: translateX(-50%); z-index: 60; display: flex; align-items: center; gap: 14px; background: var(--fg); color: var(--bg); padding: 10px 10px 10px 16px; border-radius: 12px; box-shadow: 0 6px 24px rgba(0,0,0,.25); max-width: calc(100vw - 32px); font-size: .92rem; animation: toastIn .2s ease-out; }
+.toast span { min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.toast { width: max-content; }
+.toast button { flex: none; border: 0; background: transparent; color: var(--accent-soft); font-weight: 700; padding: 6px 10px; border-radius: 8px; }
+:root[data-theme="dark"] .toast button { color: var(--accent); }
+@keyframes toastIn { from { opacity: 0; transform: translate(-50%, 10px); } }
 .stat { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 14px 16px; display: grid; gap: 4px; }
 .stat .num { font-size: clamp(1.05rem, 4.6vw, 1.45rem); font-weight: 500; overflow-wrap: anywhere; }
 .in { color: var(--income); } .out { color: var(--expense); }
@@ -295,6 +303,7 @@ svg text { fill: var(--muted); font-family: var(--mono); font-size: 10px; }
     <div class="side-foot small" id="sideFoot"></div>
   </aside>
   <div class="scrim" id="scrim" hidden></div>
+  <div class="toast" id="toast" role="status" hidden><span id="toastText"></span><button type="button" id="toastUndo">Undo</button></div>
 
   <div class="main">
     <header class="topbar">
@@ -516,7 +525,7 @@ svg text { fill: var(--muted); font-family: var(--mono); font-size: 10px; }
 
       <section class="panel">
         <div class="panel-head"><h2>Backup</h2></div>
-        <p class="small" style="margin:0">Your entries are kept only on this device. Save a backup now and then, for example to Google Drive or your messages, so you never lose them.</p>
+        <p class="small" style="margin:0">Save a backup now and then, for example to Google Drive or your messages, so you never lose your entries. You can also use it to move your entries to another phone.</p>
         <div class="data-row">
           <button class="primary" type="button" id="backupBtn" style="width:auto">Save backup</button>
           <button class="ghost" type="button" id="restoreBtn">Restore from backup</button>
@@ -795,18 +804,18 @@ svg text { fill: var(--muted); font-family: var(--mono); font-size: 10px; }
     }).join("") : `<li class="empty" style="display:block">${filtered && m.length ? "No entries match this filter this month." : "Nothing logged for this month yet. Add your first entry above."}</li>`;
 
     // donut
-    const byCat = EXP_CATS.map(c => ({ ...c, total: sum(m.filter(t => t.type === "expense" && t.cat === c.id)) })).filter(c => c.total > 0).sort((a, b) => b.total - a.total);
-    const svg = $("donut");
+    const byCat = EXP_CATS.map(c => ({ ...c, total: sum(m.filter(t => t.type === "expense" && t.cat === c.id)) })).filter(c => c.total > 0 && c.id !== "savings").sort((a, b) => b.total - a.total);
+    const spent = sum(byCat.map(c => ({ amount: c.total }))); const svg = $("donut");
     const R = 62, C = 2 * Math.PI * R;
     let off = 0, parts = `<circle cx="80" cy="80" r="${R}" fill="none" stroke="var(--line)" stroke-width="22"/>`;
     byCat.forEach(c => {
-      const len = exp ? (c.total / exp) * C : 0;
+      const len = spent ? (c.total / spent) * C : 0;
       parts += `<circle cx="80" cy="80" r="${R}" fill="none" stroke="var(${c.color})" stroke-width="22" stroke-dasharray="${Math.max(0, len - 1.5)} ${C}" stroke-dashoffset="${-off}" transform="rotate(-90 80 80)"/>`;
       off += len;
     });
-    parts += `<text x="80" y="76" text-anchor="middle" style="font-size:9px">SPENT</text><text x="80" y="94" text-anchor="middle" style="font-size:13px;fill:var(--fg)">${money(exp, { round: true })}</text>`;
+    parts += `<text x="80" y="76" text-anchor="middle" style="font-size:9px">SPENT</text><text x="80" y="94" text-anchor="middle" style="font-size:13px;fill:var(--fg)">${money(spent, { round: true })}</text>`;
     svg.innerHTML = parts;
-    $("legend").innerHTML = byCat.length ? byCat.map(c => `<li><span class="dot" style="background:var(${c.color})"></span><span>${esc(c.name)}</span><span class="num">${Math.round(c.total / exp * 100)}%</span></li>`).join("") : `<li class="small" style="display:block">No spending this month.</li>`;
+    $("legend").innerHTML = byCat.length ? byCat.map(c => `<li><span class="dot" style="background:var(${c.color})"></span><span>${esc(c.name)}</span><span class="num">${Math.round(c.total / spent * 100)}%</span></li>`).join("") : `<li class="small" style="display:block">No spending this month.</li>`;
 
     drawBars();
     renderDebts();
@@ -867,7 +876,9 @@ svg text { fill: var(--muted); font-family: var(--mono); font-size: 10px; }
     if (ed) return startEdit(ed.dataset.id);
     const b = e.target.closest(".del"); if (!b) return;
     if (b.dataset.id === editingId) { stopEdit(); $("amt").value = ""; $("note").value = ""; }
+    const before = snap(), t0 = state.tx.find(t => t.id === b.dataset.id);
     state.tx = state.tx.filter(t => t.id !== b.dataset.id); save(); render();
+    toast("Deleted " + (t0 && t0.note ? "“" + t0.note + "”" : "entry") + ".", restore(before));
   };
   function startEdit(id) {
     const t = state.tx.find(x => x.id === id); if (!t) return;
@@ -914,12 +925,13 @@ svg text { fill: var(--muted); font-family: var(--mono); font-size: 10px; }
       const c = catOf(id), i = PALETTE.indexOf(c.color);
       editCat(id, { color: PALETTE[(i + 1) % PALETTE.length] }); drawCats();
     } else if (e.target.closest(".del")) {
-      const c = catOf(id), other = catType === "income" ? "other-in" : "other";
+      const before = snap(), c = catOf(id), other = catType === "income" ? "other-in" : "other";
       const n = state.tx.filter(t => t.cat === id).length;
       state.tx.forEach(t => { if (t.cat === id) t.cat = other; });
       state.customCats = state.customCats.filter(x => x.id !== id);
       buildCats(); save(); refreshCats(); drawCats();
-      catMsg("Deleted " + c.name + "." + (n ? " Its " + n + " entr" + (n === 1 ? "y" : "ies") + " moved to " + catOf(other).name + "." : ""), "ok");
+      catMsg(n ? "Its " + n + " entr" + (n === 1 ? "y" : "ies") + " moved to " + catOf(other).name + "." : "", "ok");
+      toast("Deleted " + c.name + ".", restore(before, () => { catMsg(""); drawCats(); }));
     }
   };
   $("catList").addEventListener("change", e => {
@@ -939,6 +951,17 @@ svg text { fill: var(--muted); font-family: var(--mono); font-size: 10px; }
     catMsg("Added " + name + ".", "ok");
   };
   drawCats();
+
+  // ---- undo toast ----
+  let toastTimer = null, undoFn = null;
+  function toast(text, undo) {
+    $("toastText").textContent = text; undoFn = undo || null;
+    $("toastUndo").hidden = !undo; $("toast").hidden = false;
+    clearTimeout(toastTimer); toastTimer = setTimeout(() => { $("toast").hidden = true; undoFn = null; }, 6000);
+  }
+  $("toastUndo").onclick = () => { const f = undoFn; undoFn = null; $("toast").hidden = true; if (f) f(); };
+  const snap = () => JSON.parse(JSON.stringify({ tx: state.tx, debts: state.debts, goals: state.goals, customCats: state.customCats || [] }));
+  const restore = (b, after) => () => { Object.assign(state, b); if (typeof buildCats === "function") buildCats(); save(); fillCats(); render(); if (after) after(); };
 
   // ---- dollar rate ----
   const RATE_KEY = "pocket-ledger-rate";
@@ -1113,7 +1136,7 @@ svg text { fill: var(--muted); font-family: var(--mono); font-size: 10px; }
     else if (act === "paycancel") { payingId = null; renderDebts(); }
     else if (act === "paysave") { const n = parseAmt($("payAmt").value); payingId = null; if (n > 0) payDebt(d, n); else renderDebts(); }
     else if (act === "full") payDebt(d, d.amount - d.paid);
-    else if (act === "del") { state.debts = state.debts.filter(x => x.id !== d.id); save(); renderDebts(); }
+    else if (act === "del") { const before = snap(); state.debts = state.debts.filter(x => x.id !== d.id); save(); renderDebts(); toast("Deleted debt with " + d.who + ".", restore(before)); }
   };
   $("debts").onkeydown = e => { if (e.key === "Enter" && e.target.id === "payAmt") { e.preventDefault(); const b = $("debts").querySelector('[data-act="paysave"]'); if (b) b.click(); } };
   function parseDebt(text) {
@@ -1344,7 +1367,10 @@ Rules: amounts are plain numbers ("25k" = 25000, "2 million" = 2000000). Resolve
     addMsg("app", msg.textContent || "Done.", msg.className.includes("bad"));
   }
   $("quickForm").onsubmit = ev => { ev.preventDefault(); sendChat($("quick").value); };
-  $("newChat").onclick = () => { chat = []; saveChat(); drawChat(); go("chat"); };
+  $("newChat").onclick = () => {
+    const old = chat.slice(); chat = []; saveChat(); drawChat(); go("chat");
+    if (old.length) toast("Started a new chat.", () => { chat = old; saveChat(); drawChat(); toBottom(false); });
+  };
   $("chips").onclick = e => { const c = e.target.closest(".chip"); if (c) { $("quick").value = c.textContent; $("quick").focus(); } };
 
 
@@ -1509,7 +1535,7 @@ Rules: amounts are plain numbers ("25k" = 25000, "2 million" = 2000000). Resolve
         save(); render();
       } else renderGoals();
     }
-    else if (act === "del") { state.goals = state.goals.filter(x => x.id !== g.id); save(); renderGoals(); }
+    else if (act === "del") { const before = snap(); state.goals = state.goals.filter(x => x.id !== g.id); save(); renderGoals(); toast("Deleted goal " + g.name + ".", restore(before)); }
   };
   $("goals").onkeydown = e => { if (e.key === "Enter" && (e.target.id === "fundAmt" || e.target.id === "takeAmt")) { e.preventDefault(); const b = $("goals").querySelector('[data-act="fundsave"],[data-act="takesave"]'); if (b) b.click(); } };
 
