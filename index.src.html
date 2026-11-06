@@ -328,7 +328,14 @@ svg text { fill: var(--muted); font-family: var(--mono); font-size: 10px; }
     <div class="stat"><span class="label">Spent</span><span class="num out" id="sOut"></span></div>
     <div class="stat"><span class="label">Left over</span><span class="num" id="sNet"></span></div>
     <div class="stat"><span class="label">Saved</span><span class="num" id="sSave" style="color:var(--c9)"></span>
-      <div class="meter"><i id="sSaveBar" style="background:var(--c9)"></i></div><span class="small" id="sSaveNote"></span></div>
+      <div class="meter"><i id="sSaveBar" style="background:var(--c9)"></i></div><span class="small" id="sSaveNote"></span>
+      <button class="ghost" type="button" id="wdOpen" style="width:fit-content;padding:4px 10px;font-size:.85rem;margin-top:4px">Withdraw</button>
+      <div id="wdRow" hidden style="display:flex;gap:6px;flex-wrap:wrap;margin-top:4px">
+        <input id="wdAmt" inputmode="decimal" placeholder="Amount" aria-label="Amount to withdraw" style="width:7.5em;border:1px solid var(--line);background:var(--field);border-radius:6px;padding:5px 8px;font-family:var(--mono)">
+        <button class="primary" type="button" id="wdGo" style="width:auto;padding:5px 12px">Take out</button>
+        <button class="ghost" type="button" id="wdCancel" style="padding:5px 10px">Cancel</button>
+      </div>
+      <span class="small" id="wdMsg" role="status"></span></div>
       </section>
       <section class="panel">
         <h2 id="formTitle">Add an entry</h2>
@@ -573,7 +580,7 @@ svg text { fill: var(--muted); font-family: var(--mono); font-size: 10px; }
   ];
   const BASE_INC = [
     { id: "salary", name: "Salary" }, { id: "freelance", name: "Side income" },
-    { id: "gift", name: "Gifts" }, { id: "repaid", name: "Debt repaid to me" }, { id: "other-in", name: "Other income" },
+    { id: "gift", name: "Gifts" }, { id: "repaid", name: "Debt repaid to me" }, { id: "withdraw", name: "From savings" }, { id: "other-in", name: "Other income" },
   ];
   const KEY = "pocket-ledger-v1";
 
@@ -688,7 +695,7 @@ svg text { fill: var(--muted); font-family: var(--mono); font-size: 10px; }
   }
   // ---- categories (built-in + your own) ----
   const PALETTE = ["--c1", "--c2", "--c3", "--c4", "--c5", "--c6", "--c7", "--c8", "--c9", "--c10", "--c11", "--c12", "--c13", "--c14"];
-  const LOCKED = ["savings", "debt", "other", "repaid", "other-in"];
+  const LOCKED = ["savings", "debt", "other", "repaid", "withdraw", "other-in"];
   let EXP_CATS = [], INC_CATS = [];
   function buildCats() {
     if (!state.catEdits || typeof state.catEdits !== "object") state.catEdits = {};
@@ -737,9 +744,10 @@ svg text { fill: var(--muted); font-family: var(--mono); font-size: 10px; }
     const m = inMonth(key);
     const inc = sum(m.filter(t => t.type === "income"));
     const exp = sum(m.filter(t => t.type === "expense"));
-    const saved = sum(m.filter(t => t.type === "expense" && t.cat === "savings"));
-    $("sIn").textContent = money(inc);
-    $("sOut").textContent = money(exp - saved);
+    const taken = sum(m.filter(t => t.type === "income" && t.cat === "withdraw"));
+    const saved = sum(m.filter(t => t.type === "expense" && t.cat === "savings")) - taken;
+    $("sIn").textContent = money(inc - taken);
+    $("sOut").textContent = money(exp - saved - taken);
     $("sNet").textContent = money(inc - exp);
     $("sNet").className = "num " + (inc - exp >= 0 ? "in" : "out");
     const goal = 0;
@@ -750,7 +758,7 @@ svg text { fill: var(--muted); font-family: var(--mono); font-size: 10px; }
     bar.style.width = Math.min(100, pct * 100) + "%";
     $("sSaveNote").textContent = goal > 0
       ? (saved >= goal ? "Goal reached: " + money(goal, { round: true }) : Math.round(pct * 100) + "% of your " + money(goal, { round: true }) + " goal")
-      : (inc > 0 ? Math.round(saved / inc * 100) + "% of your income" : "");
+      : "In savings overall: " + money(savingsTotal(), { round: true });
 
     // entries
     const cats = fType === "income" ? INC_CATS : fType === "expense" ? EXP_CATS : [...EXP_CATS, ...INC_CATS];
@@ -794,7 +802,7 @@ svg text { fill: var(--muted); font-family: var(--mono); font-size: 10px; }
   function drawBars() {
     const months = [];
     for (let i = 5; i >= 0; i--) { const d = new Date(view.getFullYear(), view.getMonth() - i, 1); months.push(d); }
-    const data = months.map(d => { const m = inMonth(ym(d)); return { d, inc: sum(m.filter(t => t.type === "income")), exp: sum(m.filter(t => t.type === "expense")) }; });
+    const data = months.map(d => { const m = inMonth(ym(d)); return { d, inc: sum(m.filter(t => t.type === "income" && t.cat !== "withdraw")), exp: sum(m.filter(t => t.type === "expense" && t.cat !== "savings")) }; });
     const max = Math.max(1, ...data.map(x => Math.max(x.inc, x.exp)));
     const step = niceStep(max / 4), top = Math.ceil(max / step) * step;
     const L = 52, Rr = 8, T = 10, B = 26, W = 420, H = 200, ph = H - T - B, pw = W - L - Rr;
@@ -1139,6 +1147,7 @@ svg text { fill: var(--muted); font-family: var(--mono); font-size: 10px; }
     const mult = !m[3] ? 1 : m[3] === "million" ? 1e6 : 1000;
     const amount = Math.round(parseFloat(raw) * mult * 100) / 100;
     if (!(amount > 0)) return null;
+    if (/withdr|from (my )?saving|out of (my )?saving|took out/.test(s)) return { type: "income", cat: "withdraw", amount, date: todayStr(), note: "Taken from savings" };
     const spendWords = /\b(spent|spend|paid for|paid|bought|buy|cost|for)\b/;
     let t = INCOME_WORDS.some(w => s.includes(w)) && !/\b(spent|bought|paid for)\b/.test(s) ? "income" : "expense";
     if (t === "income" && /\bgot\b/.test(s) && !/\b(salary|paid|bonus|refund|income|money)\b/.test(s) && spendWords.test(s)) t = "expense";
@@ -1206,6 +1215,7 @@ Action shapes:
 - {"do":"pay_debt","who":"name from open debts","amount":number|null}   (null = paid in full; repayments of existing debts go here, not add_entry)
 - {"do":"add_goal","name":"goal name","target":number}
 - {"do":"save_to_goal","goal":"name from savings goals","amount":number}
+- {"do":"withdraw_savings","goal":"name from savings goals"|null,"amount":number}   (taking money back out of savings)
 Rules: amounts are plain numbers ("25k" = 25000, "2 million" = 2000000). Resolve "yesterday", weekdays etc. to dates on or before today. Money moved to savings with no goal named is an add_entry with cat "savings". If there is no amount or the meaning is unclear, return no actions and ask in "reply". Never invent amounts.`;
   }
   async function fetchT(url, opts, ms = 12000) {
@@ -1263,6 +1273,9 @@ Rules: amounts are plain numbers ("25k" = 25000, "2 million" = 2000000). Resolve
         if (d) { payDebt(d, a.amount == null ? d.amount - d.paid : amount); done.push(1); }
       } else if (a.do === "add_goal" && Number(a.target) > 0 && a.name) {
         state.goals.push({ id: uid(), name: String(a.name).slice(0, 40), target: Math.round(Number(a.target) * 100) / 100, saved: 0 }); done.push(1);
+      } else if (a.do === "withdraw_savings" && amount > 0) {
+        const g = a.goal ? findByName(state.goals, "name", a.goal) : null;
+        withdraw(amount, g); lastDate = todayStr(); done.push(1);
       } else if (a.do === "save_to_goal" && amount > 0) {
         const g = findByName(state.goals, "name", a.goal);
         if (g) { g.saved = Math.round((g.saved + amount) * 100) / 100; state.tx.push({ id: uid(), type: "expense", cat: "savings", amount, note: "Saved for " + g.name, date: todayStr() }); lastDate = todayStr(); done.push(1); }
@@ -1419,7 +1432,26 @@ Rules: amounts are plain numbers ("25k" = 25000, "2 million" = 2000000). Resolve
   $("fCat").onchange = e => { fCat = e.target.value; render(); };
 
   // ---- savings goals ----
+  // ---- withdraw from savings ----
+  const savingsTotal = () => sum(state.tx.filter(t => t.type === "expense" && t.cat === "savings")) - sum(state.tx.filter(t => t.type === "income" && t.cat === "withdraw"));
+  function withdraw(n, goal) {
+    n = Math.round(n * 100) / 100;
+    if (goal) goal.saved = Math.max(0, Math.round((goal.saved - n) * 100) / 100);
+    state.tx.push({ id: uid(), type: "income", cat: "withdraw", amount: n, note: goal ? "Taken from " + goal.name : "Taken from savings", date: todayStr() });
+  }
+  const wdMsg = (t, k) => { $("wdMsg").textContent = t; $("wdMsg").className = "small " + (k || ""); };
+  $("wdOpen").onclick = () => { $("wdRow").hidden = false; $("wdOpen").hidden = true; wdMsg(""); $("wdAmt").focus(); };
+  $("wdCancel").onclick = () => { $("wdRow").hidden = true; $("wdOpen").hidden = false; $("wdAmt").value = ""; };
+  $("wdGo").onclick = () => {
+    const n = parseAmt($("wdAmt").value);
+    if (!(n > 0)) { wdMsg("Enter an amount.", "bad"); $("wdAmt").focus(); return; }
+    withdraw(n); save(); $("wdAmt").value = ""; $("wdRow").hidden = true; $("wdOpen").hidden = false;
+    view = new Date(); view.setDate(1); render();
+    wdMsg("Took " + money(n) + " out of savings.", "ok");
+  };
+  $("wdAmt").onkeydown = e => { if (e.key === "Enter") { e.preventDefault(); $("wdGo").click(); } };
   let fundingId = null;
+  let takingId = null;
   $("goalForm").onsubmit = e => {
     e.preventDefault();
     const name = $("gName").value.trim(), target = parseAmt($("gTarget").value);
@@ -1435,16 +1467,25 @@ Rules: amounts are plain numbers ("25k" = 25000, "2 million" = 2000000). Resolve
       const open = !(g.target > 0), p = open ? 0 : g.saved / g.target, done = !open && p >= 1;
       return `<li><div class="top"><b>${done ? '<span class="pill reached">Reached</span>' : ""}${esc(g.name)}</b><span class="num">${money(g.saved, { round: true })}${open ? "" : ` <span class="small">/ ${money(g.target, { round: true })}</span>`}</span></div>
         ${open ? "" : `<div class="meter"><i style="width:${Math.min(100, p * 100)}%"></i></div>`}
-        <div class="acts">${fundingId === g.id
+        <div class="acts">${takingId === g.id
+          ? `<input id="takeAmt" inputmode="decimal" placeholder="Amount" aria-label="Amount to take out"><button class="primary" style="width:auto;padding:5px 12px" data-act="takesave" data-id="${g.id}">Take out</button><button class="ghost" data-act="takecancel">Cancel</button>`
+          : fundingId === g.id
           ? `<input id="fundAmt" inputmode="decimal" placeholder="Amount" aria-label="Amount to add"><button class="primary" style="width:auto;padding:5px 12px" data-act="fundsave" data-id="${g.id}">Add</button><button class="ghost" data-act="fundcancel">Cancel</button>`
-          : `${done ? "" : `<button class="ghost" data-act="fund" data-id="${g.id}">Add money</button>`}<span class="small">${open ? "No target set" : done ? "You did it!" : Math.round(p * 100) + "% there, " + money(g.target - g.saved, { round: true }) + " to go"}</span><button class="del" data-act="del" data-id="${g.id}" aria-label="Delete goal" title="Delete" style="margin-left:auto">×</button>`}</div></li>`;
+          : `${done ? "" : `<button class="ghost" data-act="fund" data-id="${g.id}">Add money</button>`}${g.saved > 0 ? `<button class="ghost" data-act="take" data-id="${g.id}">Take out</button>` : ""}<span class="small">${open ? "No target set" : done ? "You did it!" : Math.round(p * 100) + "% there, " + money(g.target - g.saved, { round: true }) + " to go"}</span><button class="del" data-act="del" data-id="${g.id}" aria-label="Delete goal" title="Delete" style="margin-left:auto">×</button>`}</div></li>`;
     }).join("") : `<li class="small">No goals yet. Add something you're saving for, like a car or a trip.</li>`;
     if (fundingId && $("fundAmt")) $("fundAmt").focus();
+    if (takingId && $("takeAmt")) $("takeAmt").focus();
   }
   $("goals").onclick = e => {
     const b = e.target.closest("button[data-act]"); if (!b) return;
     const g = state.goals.find(x => x.id === b.dataset.id), act = b.dataset.act;
-    if (act === "fund") { fundingId = g.id; renderGoals(); }
+    if (act === "fund") { fundingId = g.id; takingId = null; renderGoals(); }
+    else if (act === "take") { takingId = g.id; fundingId = null; renderGoals(); }
+    else if (act === "takecancel") { takingId = null; renderGoals(); }
+    else if (act === "takesave") {
+      const n = Math.min(parseAmt($("takeAmt").value), g.saved); takingId = null;
+      if (n > 0) { withdraw(n, g); save(); render(); } else renderGoals();
+    }
     else if (act === "fundcancel") { fundingId = null; renderGoals(); }
     else if (act === "fundsave") {
       const n = parseAmt($("fundAmt").value); fundingId = null;
@@ -1456,7 +1497,7 @@ Rules: amounts are plain numbers ("25k" = 25000, "2 million" = 2000000). Resolve
     }
     else if (act === "del") { state.goals = state.goals.filter(x => x.id !== g.id); save(); renderGoals(); }
   };
-  $("goals").onkeydown = e => { if (e.key === "Enter" && e.target.id === "fundAmt") { e.preventDefault(); const b = $("goals").querySelector('[data-act="fundsave"]'); if (b) b.click(); } };
+  $("goals").onkeydown = e => { if (e.key === "Enter" && (e.target.id === "fundAmt" || e.target.id === "takeAmt")) { e.preventDefault(); const b = $("goals").querySelector('[data-act="fundsave"],[data-act="takesave"]'); if (b) b.click(); } };
 
   // ---- native helpers ----
   const CAP = window.Capacitor;
