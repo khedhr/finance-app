@@ -668,7 +668,7 @@ svg text { fill: var(--muted); font-family: var(--mono); font-size: 10px; }
     if (!Array.isArray(s.tx)) s.tx = [];
     if (!Array.isArray(s.debts)) s.debts = [];
     if (!Array.isArray(s.goals)) s.goals = [];
-    if (s.currency !== "USD" && s.currency !== "IQD") s.currency = "IQD";
+    if (s.currency !== "USD" && s.currency !== "IQD") s.currency = state.currency || "USD";
     return s;
   }
   function adopt(r) {
@@ -846,7 +846,10 @@ svg text { fill: var(--muted); font-family: var(--mono); font-size: 10px; }
     $("bars").innerHTML = s;
   }
   function niceStep(raw) { const p = Math.pow(10, Math.floor(Math.log10(raw || 1))); const n = raw / p; return (n <= 1 ? 1 : n <= 2 ? 2 : n <= 5 ? 5 : 10) * p; }
-  function short(v) { return v >= 1000 ? (v / 1000).toFixed(v % 1000 ? 1 : 0) + "k" : String(Math.round(v)); }
+  function short(v) {
+    const f = (n, u) => (Math.round(n * 10) / 10).toString().replace(/\.0$/, "") + u;
+    return v >= 1e6 ? f(v / 1e6, "M") : v >= 1000 ? f(v / 1000, "k") : String(Math.round(v));
+  }
   function esc(s) { return String(s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c])); }
   const parseAmt = v => { let t = String(v).trim(); t = /\d,\d{3}(\D|$)/.test(t) ? t.replace(/,/g, "") : t.replace(/,/g, "."); const n = parseFloat(t.replace(/[^\d.]/g, "")); return isFinite(n) ? Math.round(n * 100) / 100 : NaN; };
 
@@ -864,7 +867,7 @@ svg text { fill: var(--muted); font-family: var(--mono); font-size: 10px; }
     const date = $("date").value || todayStr();
     const entry = { type, cat: $("cat").value, amount, note: $("note").value.trim(), date };
     const old = editingId && state.tx.find(t => t.id === editingId);
-    if (old) { Object.assign(old, entry); delete old.sample; } else state.tx.push({ id: uid(), ...entry });
+    if (old) { unlink(old); Object.assign(old, entry); delete old.sample; relink(old); } else state.tx.push({ id: uid(), ...entry });
     save();
     stopEdit();
     $("err").textContent = ""; $("amt").value = ""; $("note").value = "";
@@ -877,6 +880,7 @@ svg text { fill: var(--muted); font-family: var(--mono); font-size: 10px; }
     const b = e.target.closest(".del"); if (!b) return;
     if (b.dataset.id === editingId) { stopEdit(); $("amt").value = ""; $("note").value = ""; }
     const before = snap(), t0 = state.tx.find(t => t.id === b.dataset.id);
+    if (t0) unlink(t0);
     state.tx = state.tx.filter(t => t.id !== b.dataset.id); save(); render();
     toast("Deleted " + (t0 && t0.note ? "“" + t0.note + "”" : "entry") + ".", restore(before));
   };
@@ -952,6 +956,17 @@ svg text { fill: var(--muted); font-family: var(--mono); font-size: 10px; }
   };
   drawCats();
 
+  // an entry made by paying a debt or moving money for a goal: take its effect back off when it's deleted
+  function unlink(t) {
+    const r2 = n => Math.round(n * 100) / 100;
+    if (t.debt) { const d = state.debts.find(x => x.id === t.debt); if (d) d.paid = Math.max(0, r2(d.paid - t.amount)); }
+    if (t.goal) { const g = state.goals.find(x => x.id === t.goal); if (g) g.saved = Math.max(0, r2(g.saved + (t.cat === "withdraw" ? t.amount : -t.amount))); }
+  }
+  function relink(t) {
+    const r2 = n => Math.round(n * 100) / 100;
+    if (t.debt) { const d = state.debts.find(x => x.id === t.debt); if (d) d.paid = Math.min(d.amount, r2(d.paid + t.amount)); }
+    if (t.goal) { const g = state.goals.find(x => x.id === t.goal); if (g) g.saved = Math.max(0, r2(g.saved + (t.cat === "withdraw" ? -t.amount : t.amount))); }
+  }
   // ---- undo toast ----
   let toastTimer = null, undoFn = null;
   function toast(text, undo) {
@@ -1108,8 +1123,8 @@ svg text { fill: var(--muted); font-family: var(--mono); font-size: 10px; }
     d.paid = Math.round((d.paid + amt) * 100) / 100;
     // record the cash movement so the month's totals stay right
     state.tx.push(d.dir === "owe"
-      ? { id: uid(), type: "expense", cat: "debt", amount: amt, note: "Paid back " + d.who, date: todayStr() }
-      : { id: uid(), type: "income", cat: "repaid", amount: amt, note: d.who + " paid me back", date: todayStr() });
+      ? { id: uid(), type: "expense", cat: "debt", amount: amt, note: "Paid back " + d.who, date: todayStr(), debt: d.id }
+      : { id: uid(), type: "income", cat: "repaid", amount: amt, note: d.who + " paid me back", date: todayStr(), debt: d.id });
     save(); render();
   }
   function renderDebts() {
@@ -1315,7 +1330,7 @@ Rules: amounts are plain numbers ("25k" = 25000, "2 million" = 2000000). Resolve
         withdraw(amount, g); lastDate = todayStr(); done.push(1);
       } else if (a.do === "save_to_goal" && amount > 0) {
         const g = findByName(state.goals, "name", a.goal);
-        if (g) { g.saved = Math.round((g.saved + amount) * 100) / 100; state.tx.push({ id: uid(), type: "expense", cat: "savings", amount, note: "Saved for " + g.name, date: todayStr() }); lastDate = todayStr(); done.push(1); }
+        if (g) { g.saved = Math.round((g.saved + amount) * 100) / 100; state.tx.push({ id: uid(), type: "expense", cat: "savings", amount, note: "Saved for " + g.name, date: todayStr(), goal: g.id }); lastDate = todayStr(); done.push(1); }
       }
     }
     if (done.length) { save(); if (lastDate) { const d = new Date(lastDate + "T00:00:00"); view = new Date(d.getFullYear(), d.getMonth(), 1); } render(); }
@@ -1348,7 +1363,8 @@ Rules: amounts are plain numbers ("25k" = 25000, "2 million" = 2000000). Resolve
     $("chatLog").innerHTML = chat.map(m => m.who === "me" ? `<li class="msg me">${esc(m.text)}</li>` : `<li class="msg app${m.bad ? " bad" : ""}"><span>${esc(m.text)}</span></li>`).join("");
     const m = inMonth(ym(new Date()));
     const inc = sum(m.filter(t => t.type === "income")), exp = sum(m.filter(t => t.type === "expense"));
-    $("chatSummary").textContent = m.length ? new Date().toLocaleDateString(undefined, { month: "long" }) + ": spent " + money(exp, { round: true }) + ", " + money(inc - exp, { round: true }) + " left" : "Say it or type it. I'll add it to your entries.";
+    const spentNow = exp - sum(m.filter(t => t.type === "expense" && t.cat === "savings"));
+    $("chatSummary").textContent = m.length ? new Date().toLocaleDateString(undefined, { month: "long" }) + ": spent " + money(spentNow, { round: true }) + ", " + money(inc - exp, { round: true }) + " left" : "Say it or type it. I'll add it to your entries.";
   }
   function addMsg(who, text, bad) {
     chat.push({ who, text, bad: !!bad }); saveChat(); drawChat();
@@ -1477,7 +1493,7 @@ Rules: amounts are plain numbers ("25k" = 25000, "2 million" = 2000000). Resolve
   function withdraw(n, goal) {
     n = Math.round(n * 100) / 100;
     if (goal) goal.saved = Math.max(0, Math.round((goal.saved - n) * 100) / 100);
-    state.tx.push({ id: uid(), type: "income", cat: "withdraw", amount: n, note: goal ? "Taken from " + goal.name : "Taken from savings", date: todayStr() });
+    state.tx.push({ id: uid(), type: "income", cat: "withdraw", amount: n, note: goal ? "Taken from " + goal.name : "Taken from savings", date: todayStr(), ...(goal ? { goal: goal.id } : {}) });
   }
   const wdMsg = (t, k) => { $("wdMsg").textContent = t; $("wdMsg").className = "small " + (k || ""); };
   $("wdOpen").onclick = () => { $("wdRow").hidden = false; $("wdOpen").hidden = true; wdMsg(""); $("wdAmt").focus(); };
@@ -1531,7 +1547,7 @@ Rules: amounts are plain numbers ("25k" = 25000, "2 million" = 2000000). Resolve
       const n = parseAmt($("fundAmt").value); fundingId = null;
       if (n > 0) {
         g.saved = Math.round((g.saved + n) * 100) / 100;
-        state.tx.push({ id: uid(), type: "expense", cat: "savings", amount: n, note: "Saved for " + g.name, date: todayStr() });
+        state.tx.push({ id: uid(), type: "expense", cat: "savings", amount: n, note: "Saved for " + g.name, date: todayStr(), goal: g.id });
         save(); render();
       } else renderGoals();
     }
