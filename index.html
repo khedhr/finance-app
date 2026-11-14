@@ -4,46 +4,49 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <link rel="manifest" href="manifest.webmanifest">
-<meta name="theme-color" content="#ffffff">
+<meta name="theme-color" content="#14111c">
 <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Pocket Ledger">
-<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <title>Pocket Ledger</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700&family=Public+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap">
 <style>
 /* Layout: one column on phones, a two-column ledger (entries left, debts, goals + charts right) on wide screens. */
+/* ---- Pocket Ledger look: night plum with a gold coin accent, a stitched "pocket" card, tiles and a floating tab bar ---- */
 :root {
-  --bg: #ffffff;
-  --surface: #ffffff;
-  --fg: #1a1c1b;
-  --muted: #6b706e;
-  --line: #e6e8e7;
-  --accent: #0f6b5c;
-  --accent-soft: #e6f2ee;
-  --income: #1f7a4d;
-  --expense: #b2452f;
-  --warn: #b7791f;
+  --bg: #f5f2fa; --surface: #ffffff; --surface2: #f0ebf8; --fg: #1d1828; --muted: #6e6780; --line: #e5dfef; --field: #f3eff9;
+  --accent: #6c4fd1; --accent-soft: #ece6fb; --gold: #c08a12; --coin: #f2c14e; --coin-ink: #2a1d05;
+  --income: #1f8a55; --expense: #c94a37; --warn: #b7791f;
+  --hero-a: #6c4fd1; --hero-b: #3f2a92; --glow: rgba(108, 79, 209, .16);
   --c1: #0f6b5c; --c2: #d08a2e; --c3: #5872c4; --c4: #b2452f; --c5: #8a5aa8; --c6: #3e9bb3; --c7: #7a8a3a; --c8: #a0627a; --c9: #2f8f6f; --c10: #6b6f86; --c11: #c06c1f; --c12: #2d7fb8; --c13: #9c4f96; --c14: #4f8a35;
-  --side: #f7f7f6; --side-fg: #1a1c1b; --side-muted: #6b706e; --side-hover: rgba(0,0,0,.045); --side-active: #ebeceb; --field: #f6f7f6; --surface-dim: rgba(255,255,255,.35);
+  --side-hover: rgba(0,0,0,.05); --side-active: #ece6fb; --surface-dim: rgba(255,255,255,.35);
+  --tab-bg: rgba(255,255,255,.86); --shadow: 0 10px 30px rgba(40, 20, 90, .12);
+  --tabh: calc(92px + env(safe-area-inset-bottom, 0px));
   --display: "Bricolage Grotesque", "Segoe UI", system-ui, sans-serif;
   --body: "Public Sans", "Segoe UI", system-ui, sans-serif;
   --mono: "JetBrains Mono", ui-monospace, "SF Mono", Menlo, monospace;
 }
 @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
-  --bg: #1c1d1d; --surface: #262827; --fg: #ececea; --muted: #a2a6a4; --line: #353837; --field: #2d302f;
-  --accent: #4fc3a8; --accent-soft: #1f3a33; --income: #5fcf91; --expense: #f0876f; --warn: #e8b45a;
+  --bg: #14111c; --surface: #1f1a2b; --surface2: #2a2339; --fg: #f1edf7; --muted: #a69fb6; --line: #342c45; --field: #2a2339;
+  --accent: #b79cff; --accent-soft: #2e2548; --gold: #f2c14e; --coin: #f2c14e; --coin-ink: #2a1d05;
+  --income: #6fdba0; --expense: #ff8a7a; --warn: #f2c14e;
+  --hero-a: #3d2b70; --hero-b: #201936; --glow: rgba(150, 110, 255, .22);
   --c1: #4fc3a8; --c2: #e8a94f; --c3: #8ea3ec; --c4: #f0876f; --c5: #c39ae0; --c6: #6cc6dd; --c7: #b5c46a; --c8: #e09ab4; --c9: #7fd6b0; --c10: #b3b7cf; --c11: #f0a35e; --c12: #7fb8e6; --c13: #d79ad2; --c14: #9fd27a;
-  --side: #141515; --side-fg: #ececea; --side-muted: #a2a6a4; --side-hover: rgba(255,255,255,.06); --side-active: #2a2c2b;
+  --side-hover: rgba(255,255,255,.06); --side-active: #2e2548;
+  --tab-bg: rgba(31, 26, 43, .86); --shadow: 0 12px 34px rgba(0,0,0,.45);
   color-scheme: dark; } }
 :root[data-theme="dark"] {
-  --bg: #1c1d1d; --surface: #262827; --fg: #ececea; --muted: #a2a6a4; --line: #353837; --field: #2d302f;
-  --accent: #4fc3a8; --accent-soft: #1f3a33; --income: #5fcf91; --expense: #f0876f; --warn: #e8b45a;
+  --bg: #14111c; --surface: #1f1a2b; --surface2: #2a2339; --fg: #f1edf7; --muted: #a69fb6; --line: #342c45; --field: #2a2339;
+  --accent: #b79cff; --accent-soft: #2e2548; --gold: #f2c14e; --coin: #f2c14e; --coin-ink: #2a1d05;
+  --income: #6fdba0; --expense: #ff8a7a; --warn: #f2c14e;
+  --hero-a: #3d2b70; --hero-b: #201936; --glow: rgba(150, 110, 255, .22);
   --c1: #4fc3a8; --c2: #e8a94f; --c3: #8ea3ec; --c4: #f0876f; --c5: #c39ae0; --c6: #6cc6dd; --c7: #b5c46a; --c8: #e09ab4; --c9: #7fd6b0; --c10: #b3b7cf; --c11: #f0a35e; --c12: #7fb8e6; --c13: #d79ad2; --c14: #9fd27a;
-  --side: #141515; --side-fg: #ececea; --side-muted: #a2a6a4; --side-hover: rgba(255,255,255,.06); --side-active: #2a2c2b;
+  --side-hover: rgba(255,255,255,.06); --side-active: #2e2548;
+  --tab-bg: rgba(31, 26, 43, .86); --shadow: 0 12px 34px rgba(0,0,0,.45);
   color-scheme: dark;
 }
 * { box-sizing: border-box; }
@@ -60,33 +63,9 @@ body { margin: 0; }
 .wrap { display: flex; min-height: 100%; }
 .main { flex: 1; min-width: 0; display: flex; flex-direction: column; }
 .page { width: 100%; max-width: 780px; margin: 0 auto; padding-block: 8px 40px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); display: grid; gap: 16px; align-content: start; }
-.topbar { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 5; background: var(--bg); display: flex; align-items: center; gap: 10px; padding-block: 10px; padding-left: max(12px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
-body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px); z-index: 10; background: var(--bg); }
-.topbar h1 { font-size: 1.15rem; font-weight: 700; flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .ico { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; flex: none; }
 .iconbtn.plain { border: 0; background: transparent; display: grid; place-items: center; color: var(--fg); }
 .iconbtn.plain:hover { background: var(--side-hover); }
-.side { width: 260px; flex: none; background: var(--side); color: var(--side-fg); display: flex; flex-direction: column; gap: 4px; padding: 12px 10px; padding-top: calc(12px + env(safe-area-inset-top, 0px)); padding-left: max(10px, env(safe-area-inset-left, 0px)); position: sticky; top: 0; height: 100vh; height: var(--app-h, 100dvh); overflow-y: auto; }
-.side-top { display: flex; align-items: center; justify-content: space-between; padding: 2px 4px 10px 8px; }
-.brand { display: flex; align-items: center; gap: 8px; font-family: var(--display); font-weight: 700; font-size: 1.05rem; }
-.brand-dot { width: 18px; height: 18px; border-radius: 6px; background: var(--accent); box-shadow: inset 0 -6px 0 var(--surface-dim); }
-.side-nav { display: grid; gap: 2px; margin-top: 6px; }
-.nav { display: flex; align-items: center; gap: 12px; padding: 9px 10px; border-radius: 10px; color: inherit; text-decoration: none; font-weight: 500; border: 0; background: transparent; text-align: left; width: 100%; font-size: 0.97rem; }
-.nav:hover { background: var(--side-hover); }
-.nav[aria-current="page"] { background: var(--side-active); }
-.side-foot { margin-top: auto; padding: 8px 10px; color: var(--side-muted); }
-#sideClose { display: none; }
-.scrim { position: fixed; inset: 0; background: rgba(0,0,0,.4); z-index: 39; }
-@media (min-width: 901px) { #menuBtn { display: none; } .scrim { display: none !important; } }
-@media (max-width: 900px) {
-  .side { position: fixed; z-index: 40; left: 0; top: 0; bottom: 0; height: auto; width: min(290px, 84vw); transform: translateX(-102%); transition: transform .22s ease; padding-bottom: calc(12px + env(safe-area-inset-bottom, 0px)); }
-  .side.open { transform: none; box-shadow: 0 0 40px rgba(0,0,0,.25); }
-  #sideClose { display: grid; }
-}
-@media (prefers-reduced-motion: reduce) { .side { transition: none; } }
-.chatpage { min-height: calc(var(--app-h, 100dvh) - 60px); display: flex; flex-direction: column; gap: 0; padding-bottom: 0; }
-.chatpage[hidden] { display: none !important; }
-html.embedded .chatpage { height: calc(var(--app-h, 100dvh) - 60px); min-height: 0; overflow: hidden; }
 html.embedded .chat-log { flex: 1 1 auto; min-height: 0; overflow-y: auto; margin: 0; overscroll-behavior: contain; }
 html.embedded .chat-log > :first-child { margin-top: auto; }
 html.embedded .chat-empty { flex: 1 1 auto; min-height: 0; overflow-y: auto; }
@@ -105,7 +84,6 @@ html.embedded .chat-empty { flex: 1 1 auto; min-height: 0; overflow-y: auto; }
 .msg.app::before { content: ""; flex: none; width: 22px; height: 22px; border-radius: 7px; background: var(--accent); margin-top: 1px; }
 .msg.app.bad span { color: var(--expense); }
 .msg.typing span { color: var(--muted); }
-.composer { position: sticky; bottom: 0; display: grid; gap: 4px; padding: 12px 0 calc(14px + env(safe-area-inset-bottom, 0px)); background: linear-gradient(to bottom, transparent, var(--bg) 18px); }
 .composer-box { display: flex; align-items: center; gap: 8px; background: var(--surface); border: 1px solid var(--line); border-radius: 22px; padding: 6px 6px 6px 16px; box-shadow: 0 2px 12px rgba(0,0,0,.05); }
 .composer-box:focus-within { border-color: var(--accent); }
 .composer-box input { flex: 1; min-width: 0; border: 0; background: transparent; padding: 10px 0; font-size: 1rem; outline: none; }
@@ -161,7 +139,6 @@ select { border: 1px solid var(--line); background: var(--surface); border-radiu
 .summary { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 12px; align-items: start; }
 .err:empty { display: none; }
 a { color: var(--accent); }
-.toast { position: fixed; left: 50%; bottom: calc(96px + env(safe-area-inset-bottom, 0px)); transform: translateX(-50%); z-index: 60; display: flex; align-items: center; gap: 14px; background: var(--fg); color: var(--bg); padding: 10px 10px 10px 16px; border-radius: 12px; box-shadow: 0 6px 24px rgba(0,0,0,.25); max-width: calc(100vw - 32px); font-size: .92rem; animation: toastIn .2s ease-out; }
 .toast span { min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .toast { width: max-content; }
 .toast button { flex: none; border: 0; background: transparent; color: var(--accent-soft); font-weight: 700; padding: 6px 10px; border-radius: 8px; }
@@ -281,42 +258,218 @@ form.add input, form.add select { width: 100%; border: 1px solid var(--line); ba
 svg text { fill: var(--muted); font-family: var(--mono); font-size: 10px; }
 .chart-box { overflow-x: auto; }
 @media (prefers-reduced-motion: reduce) { .meter i { transition: none; } }
+
+/* ---- new layout ---- */
+body { background: radial-gradient(130% 55% at 100% -8%, var(--glow), transparent 62%), radial-gradient(90% 40% at -10% 0%, var(--glow), transparent 60%), var(--bg); background-repeat: no-repeat; min-height: 100%; }
+.panel, .stat { border-radius: 20px; }
+.panel { background: var(--surface); box-shadow: 0 1px 0 rgba(255,255,255,.02) inset; }
+.primary { border-radius: 12px; }
+.ghost { border-radius: 12px; }
+.seg { border-radius: 12px; background: var(--surface); }
+.page { padding-bottom: calc(var(--tabh) + 24px); }
+.topbar { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 5; display: flex; align-items: center; gap: 10px; max-width: 780px; width: 100%; margin: 0 auto; padding: 14px max(16px, env(safe-area-inset-right, 0px)) 8px max(16px, env(safe-area-inset-left, 0px)); background: linear-gradient(to bottom, var(--bg) 70%, transparent); }
+body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px); z-index: 10; background: var(--bg); }
+.topbar h1 { font-size: 1.6rem; font-weight: 700; flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; letter-spacing: -.02em; }
+.topbar .iconbtn { border-radius: 12px; background: var(--surface); border-color: var(--line); display: grid; place-items: center; }
+.topbar .iconbtn[aria-current="page"] { color: var(--accent); border-color: var(--accent); }
+.month span { font-size: .9rem; min-width: 6.6em; }
+@media (max-width: 400px) { .topbar h1 { font-size: 1.3rem; } .month span { min-width: 5.6em; font-size: .82rem; } .month .iconbtn { width: 32px; height: 32px; } }
+
+/* hero "pocket" card */
+.hero { position: relative; overflow: hidden; border-radius: 28px; padding: 20px 20px 18px; color: #fff; background: radial-gradient(120% 90% at 100% 0%, rgba(242,193,78,.28), transparent 55%), linear-gradient(150deg, var(--hero-a), var(--hero-b)); box-shadow: var(--shadow); display: grid; gap: 12px; }
+.hero::after { content: ""; position: absolute; inset: 7px; border: 1.5px dashed rgba(255,255,255,.22); border-radius: 22px; pointer-events: none; }
+.hero .coin { position: absolute; right: -26px; top: -26px; width: 110px; height: 110px; border-radius: 50%; background: radial-gradient(circle at 35% 35%, #ffe08a, var(--coin) 45%, #b9860f); opacity: .2; }
+.hero-top { display: flex; justify-content: space-between; align-items: center; gap: 10px; position: relative; z-index: 1; }
+.hero .label { color: rgba(255,255,255,.78); }
+.hero-big { font-family: var(--display); font-size: clamp(2rem, 9vw, 2.8rem); font-weight: 700; letter-spacing: -.02em; line-height: 1.05; position: relative; z-index: 1; overflow-wrap: anywhere; }
+.hero-big.neg { color: #ffb4a8; }
+.hero-bar { height: 8px; background: rgba(255,255,255,.16); border-radius: 99px; overflow: hidden; position: relative; z-index: 1; }
+.hero-bar i { display: block; height: 100%; border-radius: 99px; background: linear-gradient(90deg, #ffe08a, var(--coin)); transition: width .4s ease; }
+.hero-bar i.over { background: linear-gradient(90deg, #ffb4a8, #ff7a66); }
+.hero-note { font-size: .82rem; color: rgba(255,255,255,.8); position: relative; z-index: 1; }
+.hero-chips { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; position: relative; z-index: 1; }
+.hero-chip { background: rgba(255,255,255,.1); border-radius: 16px; padding: 9px 12px; display: grid; gap: 1px; }
+.hero-chip .k { font-size: .74rem; color: rgba(255,255,255,.75); display: flex; align-items: center; gap: 6px; }
+.hero-chip .k i { width: 18px; height: 18px; border-radius: 50%; display: grid; place-items: center; font-style: normal; font-size: .7rem; }
+.hero-chip .num { font-size: 1rem; color: #fff; overflow-wrap: anywhere; }
+.hero-chip.in .k i { background: #6fdba0; color: #0d3a24; }
+.hero-chip.out .k i { background: #ff9c8c; color: #4a120a; }
+.today { display: inline-flex; align-items: center; gap: 6px; background: rgba(0,0,0,.18); border-radius: 99px; padding: 4px 10px; font-size: .78rem; color: #fff; white-space: nowrap; }
+.speak { position: relative; z-index: 1; display: flex; align-items: center; gap: 10px; width: 100%; border: 0; text-align: left; background: rgba(255,255,255,.12); color: #fff; border-radius: 16px; padding: 8px 10px; font-size: .88rem; }
+.speak b { flex: none; width: 34px; height: 34px; border-radius: 50%; background: var(--coin); color: var(--coin-ink); display: grid; place-items: center; }
+.speak span { opacity: .9; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.hero .seg2 { display: inline-flex; background: rgba(0,0,0,.2); border-radius: 99px; padding: 3px; }
+.hero .seg2 button { border: 0; background: transparent; color: rgba(255,255,255,.8); border-radius: 99px; padding: 5px 12px; font-size: .8rem; font-weight: 600; }
+.hero .seg2 button[aria-pressed="true"] { background: #fff; color: #2b1f55; }
+
+.section-head { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; margin-bottom: -6px; }
+.section-head h2 { font-size: 1.05rem; }
+.seg-tabs { display: inline-flex; gap: 4px; background: var(--surface); border: 1px solid var(--line); border-radius: 99px; padding: 3px; }
+.seg-tabs button, .seg-tabs a { border: 0; background: transparent; color: var(--muted); border-radius: 99px; padding: 6px 14px; font-size: .85rem; font-weight: 600; text-decoration: none; }
+.seg-tabs [aria-pressed="true"], .seg-tabs [aria-current="page"] { background: var(--accent); color: var(--surface); }
+
+/* category tiles */
+.tiles { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
+@media (min-width: 620px) { .tiles { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
+.tile { --cc: var(--c8); position: relative; display: grid; justify-items: start; gap: 6px; text-align: left; border: 1px solid var(--line); border: 1px solid color-mix(in srgb, var(--cc) 24%, var(--line)); background: var(--surface); background: linear-gradient(165deg, color-mix(in srgb, var(--cc) 15%, var(--surface)), var(--surface) 75%); border-radius: 22px; padding: 12px 12px 14px; min-height: 112px; color: var(--fg); overflow: hidden; }
+.tile .ic { width: 38px; height: 38px; border-radius: 13px; display: grid; place-items: center; color: var(--cc); background: var(--surface2); background: color-mix(in srgb, var(--cc) 20%, transparent); }
+.tile .ic svg { width: 21px; height: 21px; fill: none; stroke: currentColor; stroke-width: 1.9; stroke-linecap: round; stroke-linejoin: round; }
+.tile .ic b { font-family: var(--display); font-size: 1rem; }
+.tile .nm { font-weight: 600; font-size: .86rem; line-height: 1.2; width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.tile .am { font-family: var(--mono); font-size: .8rem; color: var(--muted); width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.tile .am.has { color: var(--fg); }
+.tile .bar { position: absolute; left: 12px; right: 12px; bottom: 7px; height: 3px; border-radius: 99px; background: var(--line); overflow: hidden; }
+.tile .bar i { display: block; height: 100%; background: var(--cc); border-radius: 99px; }
+.tile .go { position: absolute; top: 10px; right: 10px; font-size: .68rem; color: var(--muted); }
+.tile.add { --cc: var(--accent); border-style: dashed; background: transparent; justify-items: center; align-content: center; text-align: center; color: var(--muted); }
+.tile.add .ic { color: var(--accent); }
+
+.savecard { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 12px; align-items: start; background: var(--surface); border: 1px solid var(--line); border-radius: 22px; padding: 14px 16px; }
+.savecard .ic { width: 42px; height: 42px; border-radius: 14px; background: color-mix(in srgb, var(--c9) 20%, transparent); color: var(--c9); display: grid; place-items: center; }
+.savecard .ic svg { width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-width: 1.9; stroke-linecap: round; stroke-linejoin: round; }
+.savecard .stat { border: 0; padding: 0; background: transparent; }
+.savecard .stat .num { font-size: 1.3rem; }
+
+/* chat sits above the tab bar */
+.chatpage { min-height: calc(var(--app-h, 100dvh) - 64px - var(--tabh) + 24px); display: flex; flex-direction: column; gap: 0; padding-bottom: 0; }
+.chatpage[hidden] { display: none !important; }
+html.embedded .chatpage { height: calc(var(--app-h, 100dvh) - 64px - var(--tabh)); min-height: 0; overflow: hidden; }
+.composer { position: sticky; bottom: var(--tabh); display: grid; gap: 4px; padding: 12px 0 10px; background: linear-gradient(to bottom, transparent, var(--bg) 18px); }
+.composer-box { border-radius: 26px; }
+.composer .send { background: var(--coin); color: var(--coin-ink); }
+.msg.app::before { background: linear-gradient(135deg, var(--accent), var(--coin)); border-radius: 50%; }
+.hello-mark { border-radius: 50%; background: linear-gradient(135deg, var(--hero-a), var(--accent)); }
+.hello-mark::after { background: var(--coin); }
+html.embedded .page:not(.chatpage) { padding-bottom: calc(var(--tabh) + 24px); }
+
+/* floating tab bar */
+.tabbar { position: fixed; z-index: 50; left: 50%; transform: translateX(-50%); bottom: calc(10px + env(safe-area-inset-bottom, 0px)); width: min(560px, calc(100vw - 24px)); height: 70px; display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); align-items: center; background: var(--tab-bg); -webkit-backdrop-filter: blur(18px) saturate(1.4); backdrop-filter: blur(18px) saturate(1.4); border: 1px solid var(--line); border-radius: 28px; box-shadow: var(--shadow); padding: 0 6px; }
+.tab { display: grid; justify-items: center; gap: 3px; color: var(--muted); text-decoration: none; font-size: .68rem; font-weight: 600; padding: 8px 0 6px; position: relative; min-width: 0; }
+.tab svg { width: 23px; height: 23px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+.tab span { max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.tab[aria-current="page"] { color: var(--fg); }
+.tab[aria-current="page"] svg { color: var(--accent); }
+.tab[aria-current="page"]::after { content: ""; position: absolute; bottom: 0; width: 5px; height: 5px; border-radius: 50%; background: var(--coin); }
+.tab.ask { margin-top: -30px; gap: 5px; }
+.tab.ask .bubble { width: 60px; height: 60px; border-radius: 50%; display: grid; place-items: center; background: radial-gradient(circle at 35% 30%, #ffe08a, var(--coin) 55%, #c9930f); color: var(--coin-ink); box-shadow: 0 8px 22px rgba(242,193,78,.4), 0 0 0 5px var(--bg); }
+.tab.ask .bubble svg { width: 26px; height: 26px; color: var(--coin-ink) !important; stroke-width: 2.1; }
+.tab.ask[aria-current="page"]::after { display: none; }
+.tab:active { transform: scale(.94); }
+
+/* add / edit sheet with a number pad */
+.sheet-scrim { position: fixed; inset: 0; z-index: 69; background: rgba(8, 5, 16, .55); animation: fadeIn .2s ease-out; }
+.sheet { position: fixed; z-index: 70; left: 50%; bottom: 0; transform: translateX(-50%); width: min(560px, 100vw); max-height: 94dvh; overflow-y: auto; background: var(--surface); border-radius: 28px 28px 0 0; padding: 8px 16px calc(16px + env(safe-area-inset-bottom, 0px)); box-shadow: 0 -10px 40px rgba(0,0,0,.3); display: grid; gap: 10px; animation: sheetUp .26s cubic-bezier(.2,.9,.3,1); overscroll-behavior: contain; }
+@keyframes sheetUp { from { transform: translate(-50%, 40px); opacity: 0; } }
+.grab { width: 40px; height: 5px; border-radius: 99px; background: var(--line); margin: 0 auto 2px; }
+.sheet-head { display: flex; align-items: center; gap: 10px; }
+.sheet-head .ic { width: 40px; height: 40px; border-radius: 13px; display: grid; place-items: center; }
+.sheet-head .ic svg { width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-width: 1.9; stroke-linecap: round; stroke-linejoin: round; }
+.sheet-head .ic b { font-family: var(--display); }
+.sheet-head h2 { flex: 1; min-width: 0; font-size: 1.15rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.sheet form.add { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+.sheet form.add > * { grid-column: span 2; }
+.sheet .f-cat, .sheet .f-date { grid-column: span 1; }
+.sheet .f-type { display: flex; justify-content: center; }
+.amt-box { display: flex; align-items: baseline; justify-content: center; gap: 8px; padding: 6px 0 2px; }
+.amt-box .cur { font-family: var(--mono); color: var(--muted); font-size: 1rem; }
+.sheet #amt { font-family: var(--display); font-size: 2.6rem; font-weight: 700; text-align: center; border: 0; background: transparent; padding: 0; width: 100%; max-width: 100%; letter-spacing: -.02em; outline: none; caret-color: var(--accent); }
+.sheet #amt::placeholder { color: var(--line); }
+.keypad { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+.keypad button { border: 0; background: var(--surface2); border-radius: 16px; height: 50px; font-family: var(--display); font-size: 1.35rem; font-weight: 600; color: var(--fg); }
+.keypad button:active { background: var(--accent-soft); }
+.keypad .k-del { color: var(--muted); }
+.quickdates { display: flex; gap: 6px; flex-wrap: wrap; }
+.quickdates button { border: 1px solid var(--line); background: transparent; color: var(--muted); border-radius: 99px; padding: 4px 12px; font-size: .82rem; font-weight: 600; }
+.quickdates button[aria-pressed="true"] { border-color: var(--accent); color: var(--accent); background: var(--accent-soft); }
+.sheet .go-row .primary { padding: 13px 14px; font-size: 1rem; border-radius: 16px; }
+.toast { position: fixed; left: 50%; bottom: calc(var(--tabh) + 8px); transform: translateX(-50%); z-index: 80; display: flex; align-items: center; gap: 14px; background: var(--fg); color: var(--bg); padding: 10px 10px 10px 16px; border-radius: 14px; box-shadow: 0 6px 24px rgba(0,0,0,.25); max-width: calc(100vw - 32px); font-size: .92rem; animation: toastIn .2s ease-out; }
+:root[data-theme="dark"] .toast button { color: #6c4fd1; }
+.sync-line { display: flex; align-items: center; gap: 8px; }
+.sync-line::before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: var(--income); flex: none; }
+@media (prefers-reduced-motion: reduce) { .sheet { animation: none; } }
+/* fixes */
+.page { grid-template-columns: minmax(0, 1fr); }
+.hero, .hero > *, .hero-chip { min-width: 0; }
+.topbar { background: var(--bg); background: color-mix(in srgb, var(--bg) 72%, transparent); -webkit-backdrop-filter: blur(14px); backdrop-filter: blur(14px); }
+.tile .nm { white-space: normal; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
+.sheet form.add { gap: 8px; }
+.sheet form.add > .f-cat, .sheet form.add > .f-date { grid-column: span 1; }
+.sheet.adding .f-type { display: none; }
+.amt-box { flex-direction: column; align-items: center; gap: 0; padding: 0; }
+.sheet #amt { font-size: 2.3rem; }
+.keypad button { height: 46px; }
+.sheet .label { font-size: .68rem; }
+.sheet select, .sheet input[type=date] { height: 42px; }
+html[data-view="chat"] .toast { bottom: calc(var(--tabh) + 78px); }
+:root { --toast-btn: #f2c14e; }
+:root[data-theme="dark"] { --toast-btn: #6c4fd1; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --toast-btn: #6c4fd1; } }
+.toast button, :root[data-theme="dark"] .toast button { color: var(--toast-btn); }
+html.embedded .composer { position: relative; bottom: auto; }
 </style>
 
 </head>
 <body>
 <div class="wrap">
-  <aside class="side" id="side" aria-label="Menu">
-    <div class="side-top">
-      <span class="brand"><span class="brand-dot" aria-hidden="true"></span>Pocket Ledger</span>
-      <button class="iconbtn plain" id="sideClose" aria-label="Close menu"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
-    </div>
-    <nav class="side-nav">
-    <button class="nav" type="button" id="newChat"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg><span>New chat</span></button>
-      <a class="nav" href="#chat" data-nav="chat"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h16v11H8l-4 4V5z"/></svg><span>Chat</span></a>
-      <a class="nav" href="#entries" data-nav="entries"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 6h12M8 12h12M8 18h12M4 6h.01M4 12h.01M4 18h.01"/></svg><span>Entries</span></a>
-      <a class="nav" href="#debts" data-nav="debts"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 7h11l-3-3M17 17H6l3 3"/></svg><span>Debts</span></a>
-      <a class="nav" href="#goals" data-nav="goals"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="4"/><circle cx="12" cy="12" r=".5"/></svg><span>Savings goals</span></a>
-      <a class="nav" href="#charts" data-nav="charts"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 20V10M12 20V4M19 20v-7"/></svg><span>Charts</span></a>
-      <a class="nav" href="#app-settings" data-nav="app-settings"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg><span>Settings</span></a>
-    </nav>
-    <div class="side-foot small" id="sideFoot"></div>
-  </aside>
-  <div class="scrim" id="scrim" hidden></div>
   <div class="toast" id="toast" role="status" hidden><span id="toastText"></span><button type="button" id="toastUndo">Undo</button></div>
 
   <div class="main">
     <header class="topbar">
-      <button class="iconbtn plain" id="menuBtn" aria-label="Open menu"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h10"/></svg></button>
       <h1 id="pageTitle">Pocket Ledger</h1>
       <div class="month" id="monthCtl" hidden>
         <button class="iconbtn" id="prev" aria-label="Previous month">‹</button>
         <span id="monthLabel"></span>
         <button class="iconbtn" id="next" aria-label="Next month">›</button>
       </div>
+      <button class="iconbtn" type="button" id="newChat" aria-label="New chat" title="New chat" hidden><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20h9M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg></button>
+      <a class="iconbtn" href="#app-settings" id="setBtn" aria-label="Settings" title="Settings" style="color:var(--fg)"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg></a>
     </header>
 
-    <section class="page chatpage" data-page="chat">
+    <section class="page" data-page="home">
+      <div class="banner" id="sample" hidden>
+        <span>You're looking at example entries so you can see how it works.</span>
+        <span><button class="linkbtn" id="clearSample">Clear examples and start fresh</button></span>
+      </div>
+      <section class="hero" aria-label="This month">
+        <span class="coin" aria-hidden="true"></span>
+        <div class="hero-top">
+          <span class="label" id="heroLabel">Left this month</span>
+          <span class="today" id="sToday"></span>
+        </div>
+        <div class="hero-big num" id="sNet"></div>
+        <div class="hero-bar" aria-hidden="true"><i id="heroBar"></i></div>
+        <span class="hero-note" id="heroNote"></span>
+        <div class="hero-chips">
+          <div class="hero-chip in"><span class="k"><i>↓</i>Came in</span><span class="num" id="sIn"></span></div>
+          <div class="hero-chip out"><span class="k"><i>↑</i>Went out</span><span class="num" id="sOut"></span></div>
+        </div>
+        <button type="button" class="speak" id="heroSpeak"><b><svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path fill="currentColor" d="M12 14a3 3 0 0 0 3-3V5a3 3 0 0 0-6 0v6a3 3 0 0 0 3 3Zm5-3a5 5 0 0 1-10 0H5a7 7 0 0 0 6 6.92V21h2v-3.08A7 7 0 0 0 19 11h-2Z"/></svg></b><span>Just say it: “taxi 5,000 and lunch 12,000”</span></button>
+      </section>
+
+      <div class="section-head">
+        <h2 id="tilesTitle">Tap to add</h2>
+        <div class="seg-tabs" role="group" aria-label="Show">
+          <button type="button" data-home="expense" aria-pressed="true">Spending</button>
+          <button type="button" data-home="income" aria-pressed="false">Income</button>
+        </div>
+      </div>
+      <div class="tiles" id="tiles"></div>
+
+      <div class="savecard" id="saveCard">
+        <span class="ic" aria-hidden="true"><svg viewBox="0 0 24 24"><ellipse cx="12" cy="6" rx="7" ry="3"/><path d="M5 6v6c0 1.7 3.1 3 7 3s7-1.3 7-3V6M5 12v6c0 1.7 3.1 3 7 3s7-1.3 7-3v-6"/></svg></span>
+        <div class="stat"><span class="label">Saved this month</span><span class="num" id="sSave" style="color:var(--c9)"></span>
+          <div class="meter"><i id="sSaveBar" style="background:var(--c9)"></i></div><span class="small" id="sSaveNote"></span>
+          <button class="ghost" type="button" id="wdOpen" style="width:fit-content;padding:4px 12px;font-size:.85rem;margin-top:4px">Withdraw</button>
+          <div id="wdRow" hidden style="display:flex;gap:6px;flex-wrap:wrap;margin-top:4px">
+            <input id="wdAmt" inputmode="decimal" placeholder="Amount" aria-label="Amount to withdraw" style="width:7.5em;border:1px solid var(--line);background:var(--field);border-radius:10px;padding:5px 8px;font-family:var(--mono)">
+            <button class="primary" type="button" id="wdGo" style="width:auto;padding:5px 12px">Take out</button>
+            <button class="ghost" type="button" id="wdCancel" style="padding:5px 10px">Cancel</button>
+          </div>
+          <span class="small" id="wdMsg" role="status"></span></div>
+      </div>
+    </section>
+
+<section class="page chatpage" data-page="chat">
       <div class="chat-empty" id="chatEmpty">
         <div class="hello-mark" aria-hidden="true"></div>
         <h2 class="hello">What did you spend today?</h2>
@@ -342,42 +495,6 @@ svg text { fill: var(--muted); font-family: var(--mono); font-size: 10px; }
     </section>
 
     <section class="page" data-page="entries" hidden>
-  <div class="banner" id="sample" hidden>
-    <span>You're looking at example entries so you can see how it works.</span>
-    <span><button class="linkbtn" id="clearSample">Clear examples and start fresh</button></span>
-  </div>
-      <section class="summary" aria-label="This month">
-    <div class="stat"><span class="label">Income</span><span class="num in" id="sIn"></span></div>
-    <div class="stat"><span class="label">Spent</span><span class="num out" id="sOut"></span></div>
-    <div class="stat"><span class="label">Left over</span><span class="num" id="sNet"></span></div>
-    <div class="stat"><span class="label">Saved</span><span class="num" id="sSave" style="color:var(--c9)"></span>
-      <div class="meter"><i id="sSaveBar" style="background:var(--c9)"></i></div><span class="small" id="sSaveNote"></span>
-      <button class="ghost" type="button" id="wdOpen" style="width:fit-content;padding:4px 10px;font-size:.85rem;margin-top:4px">Withdraw</button>
-      <div id="wdRow" hidden style="display:flex;gap:6px;flex-wrap:wrap;margin-top:4px">
-        <input id="wdAmt" inputmode="decimal" placeholder="Amount" aria-label="Amount to withdraw" style="width:7.5em;border:1px solid var(--line);background:var(--field);border-radius:6px;padding:5px 8px;font-family:var(--mono)">
-        <button class="primary" type="button" id="wdGo" style="width:auto;padding:5px 12px">Take out</button>
-        <button class="ghost" type="button" id="wdCancel" style="padding:5px 10px">Cancel</button>
-      </div>
-      <span class="small" id="wdMsg" role="status"></span></div>
-      </section>
-      <section class="panel">
-        <h2 id="formTitle">Add an entry</h2>
-        <form class="add" id="addForm" novalidate>
-          <div class="f f-type">
-            <div class="seg" role="group" aria-label="Entry type">
-              <button type="button" class="e" id="tExp" aria-pressed="true">Expense</button>
-              <button type="button" class="i" id="tInc" aria-pressed="false">Income</button>
-            </div>
-          </div>
-          <label class="f f-amt"><span class="label">Amount</span><input id="amt" inputmode="decimal" placeholder="0.00" autocomplete="off"></label>
-          <label class="f f-cat"><span class="label">Category</span><select id="cat"></select></label>
-          <label class="f f-date"><span class="label">Date</span><input id="date" type="date"></label>
-          <label class="f f-note"><span class="label">Note</span><input id="note" placeholder="e.g. Weekly groceries" maxlength="80" autocomplete="off"></label>
-          <div class="f f-go"><div class="go-row"><button class="primary" type="submit" id="saveBtn">Add</button><button class="ghost" type="button" id="cancelEdit" hidden>Cancel</button></div></div>
-        </form>
-        <p class="err" id="err" role="alert"></p>
-      </section>
-
       <section class="panel">
         <div class="panel-head"><h2>Entries</h2><span class="small" id="count"></span></div>
         <div class="data-row" style="margin:0 0 10px"><button class="ghost" type="button" id="exportBtn">Export month to Excel</button><span class="small" id="exportMsg" role="status"></span></div>
@@ -394,6 +511,7 @@ svg text { fill: var(--muted); font-family: var(--mono); font-size: 10px; }
     </section>
 
     <section class="page" data-page="debts" hidden>
+      <div class="seg-tabs" role="tablist" aria-label="Plans" style="width:fit-content"><a href="#debts" aria-current="page">Debts</a><a href="#goals">Savings goals</a></div>
       <section class="panel" id="debtPanel">
         <div class="panel-head"><h2>Debts</h2><span class="small">Not tied to a month</span></div>
         <div class="debt-totals">
@@ -417,6 +535,7 @@ svg text { fill: var(--muted); font-family: var(--mono); font-size: 10px; }
     </section>
 
     <section class="page" data-page="goals" hidden>
+      <div class="seg-tabs" role="tablist" aria-label="Plans" style="width:fit-content"><a href="#debts">Debts</a><a href="#goals" aria-current="page">Savings goals</a></div>
       <section class="panel">
         <div class="panel-head"><h2>Savings goals</h2><span class="small" id="goalsNote"></span></div>
         <form id="goalForm" novalidate class="debt-add">
@@ -446,11 +565,12 @@ svg text { fill: var(--muted); font-family: var(--mono); font-size: 10px; }
     </section>
 
     <section class="page" data-page="app-settings" hidden>
+      <p class="small sync-line" id="sideFoot" style="margin:0"></p>
       <section class="panel">
         <div class="panel-head"><h2>Appearance</h2></div>
         <div class="seg" role="group" aria-label="Theme" id="themeSeg">
-          <button type="button" class="a" data-theme-opt="light" aria-pressed="true">Light</button>
-          <button type="button" class="a" data-theme-opt="dark" aria-pressed="false">Dark</button>
+          <button type="button" class="a" data-theme-opt="light" aria-pressed="false">Light</button>
+          <button type="button" class="a" data-theme-opt="dark" aria-pressed="true">Dark</button>
           <button type="button" class="a" data-theme-opt="auto" aria-pressed="false">Same as phone</button>
         </div>
         <p class="small" style="margin:14px 0 6px;font-weight:600">Text size</p>
@@ -462,7 +582,7 @@ svg text { fill: var(--muted); font-family: var(--mono); font-size: 10px; }
       </section>
 
       <section class="panel">
-        <div class="panel-head"><h2>Categories</h2></div>
+        <div class="panel-head" id="catPanel"><h2>Categories</h2></div>
         <p class="small" style="margin:0 0 10px">Rename any category, tap the dot to change its color, or add your own.</p>
         <div class="seg" role="group" aria-label="Category type" id="catSeg">
           <button type="button" class="e" data-ct="expense" aria-pressed="true">Spending</button>
@@ -540,6 +660,47 @@ svg text { fill: var(--muted); font-family: var(--mono); font-size: 10px; }
       </section>
     </section>
   </div>
+
+  <nav class="tabbar" aria-label="Main">
+    <a class="tab" href="#home" data-nav="home"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 10.5 12 4l8 6.5V20a1 1 0 0 1-1 1h-4.5v-6h-5v6H5a1 1 0 0 1-1-1z"/></svg><span>Home</span></a>
+    <a class="tab" href="#entries" data-nav="entries"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 6h12M8 12h12M8 18h12M4 6h.01M4 12h.01M4 18h.01"/></svg><span>Entries</span></a>
+    <a class="tab ask" href="#chat" data-nav="chat" aria-label="Ask"><span class="bubble"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3a3 3 0 0 0-3 3v5a3 3 0 0 0 6 0V6a3 3 0 0 0-3-3ZM19 11a7 7 0 0 1-14 0M12 18v3"/></svg></span><span>Ask</span></a>
+    <a class="tab" href="#goals" data-nav="plans"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="4"/><circle cx="12" cy="12" r=".6"/></svg><span>Plans</span></a>
+    <a class="tab" href="#charts" data-nav="charts"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 20V10M12 20V4M19 20v-7"/></svg><span>Charts</span></a>
+  </nav>
+
+  <div class="sheet-scrim" id="sheetScrim" hidden></div>
+  <div class="sheet" id="sheet" role="dialog" aria-modal="true" aria-labelledby="formTitle" hidden>
+    <div class="grab" aria-hidden="true"></div>
+    <div class="sheet-head">
+      <span class="ic" id="sheetIc" aria-hidden="true"></span>
+      <h2 id="formTitle">Add an entry</h2>
+      <button class="iconbtn" type="button" id="sheetClose" aria-label="Close" style="display:grid;place-items:center;border-radius:12px"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+    </div>
+    <form class="add" id="addForm" novalidate>
+      <div class="f f-type">
+        <div class="seg" role="group" aria-label="Entry type">
+          <button type="button" class="e" id="tExp" aria-pressed="true">Expense</button>
+          <button type="button" class="i" id="tInc" aria-pressed="false">Income</button>
+        </div>
+      </div>
+      <div class="amt-box"><input id="amt" inputmode="decimal" placeholder="0" autocomplete="off" aria-label="Amount"><span class="cur" id="amtCur"></span></div>
+      <div class="keypad" id="keypad" aria-label="Number pad">
+        <button type="button">1</button><button type="button">2</button><button type="button">3</button>
+        <button type="button">4</button><button type="button">5</button><button type="button">6</button>
+        <button type="button">7</button><button type="button">8</button><button type="button">9</button>
+        <button type="button" id="kExtra">000</button><button type="button">0</button><button type="button" class="k-del" data-k="del" aria-label="Delete">⌫</button>
+      </div>
+      <label class="f f-cat"><span class="label">Category</span><select id="cat"></select></label>
+      <label class="f f-date"><span class="label">Date</span><input id="date" type="date"></label>
+      <div class="quickdates" id="quickDates">
+        <button type="button" data-qd="0">Today</button><button type="button" data-qd="1">Yesterday</button><button type="button" data-qd="2">2 days ago</button>
+      </div>
+      <label class="f f-note"><span class="label">Note</span><input id="note" placeholder="Optional, e.g. Weekly groceries" maxlength="80" autocomplete="off"></label>
+      <p class="err" id="err" role="alert"></p>
+      <div class="f f-go"><div class="go-row"><button class="primary" type="submit" id="saveBtn">Add</button><button class="ghost" type="button" id="cancelEdit" hidden>Cancel</button></div></div>
+    </form>
+  </div>
 </div>
 
 <script>
@@ -560,7 +721,7 @@ svg text { fill: var(--muted); font-family: var(--mono); font-size: 10px; }
     window.scrollTo({ top: document.body.scrollHeight, behavior: smooth ? "smooth" : "auto" });
   }
   const THEME_KEY = "pocket-ledger-theme", hostTheme = document.documentElement.getAttribute("data-theme");
-  let themePref = "light"; try { themePref = localStorage.getItem(THEME_KEY) || "light"; } catch (e) {}
+  let themePref = "dark"; try { themePref = localStorage.getItem(THEME_KEY) || "dark"; } catch (e) {}
   function applyTheme() {
     const r = document.documentElement;
     if (themePref === "auto") { hostTheme ? r.setAttribute("data-theme", hostTheme) : r.removeAttribute("data-theme"); }
@@ -568,7 +729,7 @@ svg text { fill: var(--muted); font-family: var(--mono); font-size: 10px; }
     const dark = themePref === "dark" || (themePref === "auto" && (hostTheme ? hostTheme === "dark" : matchMedia("(prefers-color-scheme: dark)").matches));
     let m = document.querySelector('meta[name="theme-color"]');
     if (!m) { m = document.createElement("meta"); m.name = "theme-color"; document.head.appendChild(m); }
-    m.content = dark ? "#1c1d1d" : "#ffffff";
+    m.content = dark ? "#14111c" : "#f5f2fa";
     document.querySelectorAll("[data-theme-opt]").forEach(b => b.setAttribute("aria-pressed", b.dataset.themeOpt === themePref));
   }
   applyTheme();
@@ -760,8 +921,10 @@ svg text { fill: var(--muted); font-family: var(--mono); font-size: 10px; }
 
   function render() {
     const key = ym(view);
-    $("monthLabel").textContent = view.toLocaleDateString(undefined, { month: "long", year: "numeric" });
+    $("monthLabel").textContent = view.toLocaleDateString(undefined, { month: "short", year: "numeric" });
     $("currency").value = state.currency;
+    $("amtCur").textContent = state.currency;
+    $("kExtra").textContent = state.currency === "IQD" ? "000" : ".";
     $("sample").hidden = !state.tx.some(t => t.sample);
 
     const m = inMonth(key);
@@ -772,7 +935,18 @@ svg text { fill: var(--muted); font-family: var(--mono); font-size: 10px; }
     $("sIn").textContent = money(inc - taken);
     $("sOut").textContent = money(exp - saved - taken);
     $("sNet").textContent = money(inc - exp);
-    $("sNet").className = "num " + (inc - exp >= 0 ? "in" : "out");
+    $("sNet").className = "hero-big num" + (inc - exp < 0 ? " neg" : "");
+    const spentNet = exp - saved - taken, incNet = inc - taken;
+    const isNow = key === ym(new Date());
+    $("heroLabel").textContent = isNow ? "Left this month" : "Left in " + view.toLocaleDateString(undefined, { month: "long" });
+    const ratio = incNet > 0 ? spentNet / incNet : (spentNet > 0 ? 1 : 0);
+    $("heroBar").style.width = Math.min(100, Math.max(0, ratio * 100)) + "%";
+    $("heroBar").className = ratio > 1 ? "over" : "";
+    $("heroNote").textContent = incNet > 0 ? "You've spent " + Math.round(ratio * 100) + "% of what came in" : spentNet > 0 ? "Add your income to see how much is left" : "Nothing logged yet. Tap a tile below to start.";
+    const td = todayStr(), todaySpent = sum(state.tx.filter(t => t.date === td && t.type === "expense" && t.cat !== "savings"));
+    $("sToday").textContent = "Today " + money(todaySpent, { round: true });
+    $("sToday").hidden = !isNow;
+    renderTiles(m);
     const goal = 0;
     const pct = goal > 0 ? saved / goal : 0;
     $("sSave").textContent = money(saved);
@@ -801,7 +975,7 @@ svg text { fill: var(--muted); font-family: var(--mono); font-size: 10px; }
         <span class="num ${t.type === "income" ? "in" : "out"}">${sign}${money(t.amount)}</span>
         <button class="edit" data-id="${t.id}" aria-label="Edit entry" title="Edit"><svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><path fill="currentColor" d="M3 17.25V21h3.75L17.8 9.94l-3.75-3.75L3 17.25Zm17.7-10.2a1 1 0 0 0 0-1.41l-2.34-2.34a1 1 0 0 0-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83Z"/></svg></button>
         <button class="del" data-id="${t.id}" aria-label="Delete entry" title="Delete">×</button></li>`;
-    }).join("") : `<li class="empty" style="display:block">${filtered && m.length ? "No entries match this filter this month." : "Nothing logged for this month yet. Add your first entry above."}</li>`;
+    }).join("") : `<li class="empty" style="display:block">${filtered && m.length ? "No entries match this filter this month." : "Nothing logged for this month yet. Tap a tile on Home to add one."}</li>`;
 
     // donut
     const byCat = EXP_CATS.map(c => ({ ...c, total: sum(m.filter(t => t.type === "expense" && t.cat === c.id)) })).filter(c => c.total > 0 && c.id !== "savings").sort((a, b) => b.total - a.total);
@@ -867,12 +1041,15 @@ svg text { fill: var(--muted); font-family: var(--mono); font-size: 10px; }
     const date = $("date").value || todayStr();
     const entry = { type, cat: $("cat").value, amount, note: $("note").value.trim(), date };
     const old = editingId && state.tx.find(t => t.id === editingId);
+    const snap0 = old ? null : snap();
     if (old) { unlink(old); Object.assign(old, entry); delete old.sample; relink(old); } else state.tx.push({ id: uid(), ...entry });
+    const wasEdit = !!old, before = snap0;
     save();
     stopEdit();
     $("err").textContent = ""; $("amt").value = ""; $("note").value = "";
     const d = new Date(date + "T00:00:00"); view = new Date(d.getFullYear(), d.getMonth(), 1);
-    render(); $("amt").focus();
+    render(); closeSheet();
+    toast(wasEdit ? "Saved changes." : "Added " + money(amount) + " to " + catOf(entry.cat).name + ".", before ? restore(before) : null);
   };
   $("list").onclick = e => {
     const ed = e.target.closest(".edit");
@@ -897,8 +1074,7 @@ svg text { fill: var(--muted); font-family: var(--mono); font-size: 10px; }
     $("cancelEdit").hidden = false;
     $("err").textContent = "";
     render();
-    $("addForm").scrollIntoView({ behavior: "smooth", block: "center" });
-    $("amt").focus({ preventScroll: true });
+    showSheet();
   }
   function stopEdit() {
     editingId = null;
@@ -906,7 +1082,113 @@ svg text { fill: var(--muted); font-family: var(--mono); font-size: 10px; }
     $("saveBtn").textContent = "Add";
     $("cancelEdit").hidden = true;
   }
-  $("cancelEdit").onclick = () => { stopEdit(); $("amt").value = ""; $("note").value = ""; $("date").value = todayStr(); render(); };
+  $("cancelEdit").onclick = () => { stopEdit(); $("amt").value = ""; $("note").value = ""; $("date").value = todayStr(); render(); closeSheet(); };
+
+  // ---- home tiles: tap a category to add to it ----
+  const ICONS = {
+    housing: '<path d="M4 10.5 12 4l8 6.5V20a1 1 0 0 1-1 1h-4.5v-6h-5v6H5a1 1 0 0 1-1-1z"/>',
+    groceries: '<path d="M3 9h18l-2 10a2 2 0 0 1-2 1.6H7A2 2 0 0 1 5 19L3 9ZM8 9l3-5M16 9l-3-5M9 13v4M15 13v4"/>',
+    transport: '<path d="M5 16V11l2-5h10l2 5v5M5 16h14M5 16v2.5M19 16v2.5M4 11h16"/><circle cx="8" cy="13.5" r=".6"/><circle cx="16" cy="13.5" r=".6"/>',
+    eating: '<path d="M7 3v8M5 3v5a2 2 0 0 0 4 0V3M7 11v10M17 21V3c-2 1.5-3 4-3 7v3h3"/>',
+    bills: '<path d="M13 2 5 13h6l-1 9 8-11h-6l1-9Z"/>',
+    health: '<path d="M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.6-7 10-7 10Z"/><path d="M8.5 11.5h2l1-2 1.5 4 1-2h1.5"/>',
+    fun: '<path d="M6 8h12l-1 12H7L6 8Z"/><path d="M9 8V6.5a3 3 0 0 1 6 0V8"/>',
+    savings: '<ellipse cx="12" cy="6" rx="7" ry="3"/><path d="M5 6v6c0 1.7 3.1 3 7 3s7-1.3 7-3V6M5 12v6c0 1.7 3.1 3 7 3s7-1.3 7-3v-6"/>',
+    debt: '<path d="M7 7h11l-3-3M17 17H6l3 3"/>',
+    other: '<circle cx="6" cy="12" r="1.2"/><circle cx="12" cy="12" r="1.2"/><circle cx="18" cy="12" r="1.2"/>',
+    salary: '<rect x="3" y="7" width="18" height="13" rx="2"/><path d="M9 7V5a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2M3 12h18"/>',
+    freelance: '<rect x="4" y="5" width="16" height="11" rx="1.5"/><path d="M2 19h20"/>',
+    gift: '<rect x="4" y="9" width="16" height="11" rx="1"/><path d="M3 9h18M12 9v11M12 9S10 4 7.5 5.5 9 9 12 9Zm0 0s2-5 4.5-3.5S15 9 12 9Z"/>',
+    repaid: '<path d="M9 14 4 9l5-5"/><path d="M4 9h11a5 5 0 0 1 0 10h-3"/>',
+    withdraw: '<ellipse cx="12" cy="17" rx="7" ry="3"/><path d="M12 3v9M8.5 8.5 12 12l3.5-3.5"/>',
+    "other-in": '<path d="M12 5v14M5 12h14"/>',
+  };
+  const icon = c => ICONS[c.id] ? `<svg viewBox="0 0 24 24" aria-hidden="true">${ICONS[c.id]}</svg>` : `<b>${esc((c.name || "?").trim().charAt(0).toUpperCase())}</b>`;
+  const tileColor = (c, t) => t === "income" ? (c.id === "withdraw" ? "--c9" : c.id === "repaid" ? "--c12" : c.id === "gift" ? "--c13" : c.id === "freelance" ? "--c6" : c.id === "other-in" ? "--c10" : "--c14") : (c.color || "--c8");
+  let homeType = "expense";
+  function renderTiles(m) {
+    const cats = homeType === "income" ? INC_CATS : EXP_CATS;
+    const totals = cats.map(c => sum(m.filter(t => t.type === homeType && t.cat === c.id)));
+    const max = Math.max(1, ...totals);
+    $("tiles").innerHTML = cats.map((c, i) => {
+      const jump = c.id === "debt" || c.id === "repaid" || c.id === "withdraw";
+      return `<button type="button" class="tile" data-cat="${esc(c.id)}" style="--cc:var(${tileColor(c, homeType)})" aria-label="${esc(c.name)}, ${money(totals[i], { round: true })} this month">
+        <span class="ic">${icon(c)}</span>${jump ? '<span class="go" aria-hidden="true">›</span>' : ""}
+        <span class="nm">${esc(c.name)}</span>
+        <span class="am${totals[i] ? " has" : ""}">${money(totals[i], { round: true })}</span>
+        <span class="bar"><i style="width:${Math.round(totals[i] / max * 100)}%"></i></span></button>`;
+    }).join("") + `<button type="button" class="tile add" data-cat="__add" aria-label="Add a category"><span class="ic"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg></span><span class="nm">New category</span></button>`;
+    document.querySelectorAll("[data-home]").forEach(b => b.setAttribute("aria-pressed", b.dataset.home === homeType));
+  }
+  document.querySelectorAll("[data-home]").forEach(b => b.onclick = () => { homeType = b.dataset.home; render(); });
+  $("tiles").onclick = e => {
+    const b = e.target.closest(".tile"); if (!b) return;
+    const id = b.dataset.cat;
+    if (id === "__add") {
+      catType = homeType; location.hash = "#app-settings";
+      setTimeout(() => { drawCats(); $("catPanel").scrollIntoView({ behavior: "smooth", block: "start" }); $("catNew").focus({ preventScroll: true }); }, 60);
+      return;
+    }
+    if (id === "debt" || id === "repaid") { location.hash = "#debts"; return; }
+    if (id === "withdraw") { $("saveCard").scrollIntoView({ behavior: "smooth", block: "center" }); if (!$("wdOpen").hidden) $("wdOpen").click(); return; }
+    openSheet(homeType, id);
+  };
+
+  // ---- the add / edit sheet ----
+  const coarse = matchMedia("(pointer: coarse)").matches;
+  if (coarse) $("amt").setAttribute("inputmode", "none");
+  function sheetIcon() {
+    const c = catOf($("cat").value), col = tileColor(c, type);
+    $("sheetIc").innerHTML = icon(c);
+    $("sheetIc").style.cssText = `color:var(${col});background:color-mix(in srgb, var(${col}) 20%, transparent)`;
+  }
+  function markDate() {
+    const v = $("date").value;
+    document.querySelectorAll("[data-qd]").forEach(b => { const d = new Date(); d.setDate(d.getDate() - Number(b.dataset.qd)); b.setAttribute("aria-pressed", ymd(d) === v); });
+  }
+  const ymd = d => d.getFullYear() + "-" + pad(d.getMonth() + 1) + "-" + pad(d.getDate());
+  function showSheet() {
+    $("sheet").hidden = false; $("sheetScrim").hidden = false;
+    sheetIcon(); markDate();
+    document.body.style.overflow = "hidden";
+    if (!coarse) setTimeout(() => $("amt").focus({ preventScroll: true }), 50);
+  }
+  function openSheet(t, cat) {
+    if (editingId) stopEdit();
+    setType(t);
+    if (cat && [...$("cat").options].some(o => o.value === cat)) $("cat").value = cat;
+    $("amt").value = ""; $("note").value = ""; $("err").textContent = "";
+    $("date").value = todayStr();
+    $("formTitle").textContent = catOf($("cat").value).name;
+    $("sheet").classList.add("adding");
+    showSheet();
+  }
+  function closeSheet(quiet) {
+    if ($("sheet").hidden) return;
+    $("sheet").hidden = true; $("sheetScrim").hidden = true; $("sheet").classList.remove("adding");
+    document.body.style.overflow = "";
+    if (editingId) { stopEdit(); $("amt").value = ""; $("note").value = ""; if (!quiet) render(); }
+  }
+  $("sheetClose").onclick = () => closeSheet();
+  $("sheetScrim").onclick = () => closeSheet();
+  $("cat").addEventListener("change", () => { sheetIcon(); if (!editingId) $("formTitle").textContent = catOf($("cat").value).name; });
+  $("tExp").addEventListener("click", () => { sheetIcon(); if (!editingId) $("formTitle").textContent = catOf($("cat").value).name; });
+  $("tInc").addEventListener("click", () => { sheetIcon(); if (!editingId) $("formTitle").textContent = catOf($("cat").value).name; });
+  $("date").addEventListener("change", markDate);
+  $("quickDates").onclick = e => { const b = e.target.closest("[data-qd]"); if (!b) return; const d = new Date(); d.setDate(d.getDate() - Number(b.dataset.qd)); $("date").value = ymd(d); markDate(); };
+  const group = s => { const [i, f] = s.split("."); const g = i.replace(/^0+(?=\d)/, "").replace(/\B(?=(\d{3})+(?!\d))/g, ","); return f !== undefined ? g + "." + f : g; };
+  $("keypad").onclick = e => {
+    const b = e.target.closest("button"); if (!b) return;
+    let raw = $("amt").value.replace(/,/g, "");
+    if (b.dataset.k === "del") raw = raw.slice(0, -1);
+    else if (b.textContent === ".") { if (!raw.includes(".")) raw = (raw || "0") + "."; }
+    else if (b.textContent === "000") { if (raw) raw += "000"; }
+    else if (!(raw.includes(".") && raw.split(".")[1].length >= 2)) raw += b.textContent;
+    if (raw.replace(/\D/g, "").length > 13) return;
+    $("amt").value = raw ? group(raw) : "";
+    $("err").textContent = "";
+  };
+  $("heroSpeak").onclick = () => { location.hash = "#chat"; go("chat"); $("mic").click(); };
 
   // ---- categories editor ----
   let catType = "expense";
@@ -1384,32 +1666,32 @@ Rules: amounts are plain numbers ("25k" = 25000, "2 million" = 2000000). Resolve
   }
   $("quickForm").onsubmit = ev => { ev.preventDefault(); sendChat($("quick").value); };
   $("newChat").onclick = () => {
-    const old = chat.slice(); chat = []; saveChat(); drawChat(); go("chat");
+    const old = chat.slice(); chat = []; saveChat(); drawChat();
     if (old.length) toast("Started a new chat.", () => { chat = old; saveChat(); drawChat(); toBottom(false); });
   };
   $("chips").onclick = e => { const c = e.target.closest(".chip"); if (c) { $("quick").value = c.textContent; $("quick").focus(); } };
 
 
   // ---- pages & menu ----
-  const TITLES = { chat: "Pocket Ledger", entries: "Entries", debts: "Debts", goals: "Savings goals", charts: "Charts", "app-settings": "Settings" };
+  const TITLES = { home: "Pocket Ledger", chat: "Ask", entries: "Entries", debts: "Plans", goals: "Plans", charts: "Charts", "app-settings": "Settings" };
   function go(page) {
-    if (!TITLES[page]) page = "chat";
+    if (!TITLES[page]) page = "home";
+    const tab = page === "debts" || page === "goals" ? "plans" : page;
     document.querySelectorAll("[data-page]").forEach(el => el.hidden = el.dataset.page !== page);
-    document.querySelectorAll("[data-nav]").forEach(a => a.dataset.nav === page ? a.setAttribute("aria-current", "page") : a.removeAttribute("aria-current"));
+    document.querySelectorAll("[data-nav]").forEach(a => a.dataset.nav === tab ? a.setAttribute("aria-current", "page") : a.removeAttribute("aria-current"));
+    $("setBtn").toggleAttribute("aria-current", page === "app-settings");
     $("pageTitle").textContent = TITLES[page];
-    $("monthCtl").hidden = !(page === "entries" || page === "charts");
-    closeSide();
+    $("monthCtl").hidden = !(page === "home" || page === "entries" || page === "charts");
+    $("newChat").hidden = page !== "chat";
+    $("setBtn").hidden = page === "chat";
+    closeSheet(true);
+    document.documentElement.setAttribute("data-view", page);
     if (page === "chat") drawChat();
     if (page === "app-settings") fetchRate(false);
     page === "chat" ? toBottom(false) : window.scrollTo(0, 0);
   }
-  function openSide() { $("side").classList.add("open"); $("scrim").hidden = false; }
-  function closeSide() { $("side").classList.remove("open"); $("scrim").hidden = true; }
-  $("menuBtn").onclick = openSide;
-  $("sideClose").onclick = closeSide;
-  $("scrim").onclick = closeSide;
   window.addEventListener("hashchange", () => go(location.hash.slice(1)));
-  document.addEventListener("keydown", e => { if (e.key === "Escape") closeSide(); });
+  document.addEventListener("keydown", e => { if (e.key === "Escape") closeSheet(); });
   $("aiKeySave").onclick = () => {
     const k = $("aiKeyIn").value.trim();
     if (k.length < 20 || /\s/.test(k)) { $("aiMsg").className = "small bad"; $("aiMsg").textContent = "That doesn't look like a full key. Copy it again with the Copy key button."; return; }
@@ -1590,7 +1872,7 @@ Rules: amounts are plain numbers ("25k" = 25000, "2 million" = 2000000). Resolve
   $("date").value = todayStr();
   setType("expense");
   render();
-  go(location.hash.slice(1) || "chat");
+  go(location.hash.slice(1) || "home");
   try { localStorage.removeItem("pocket-ledger-lock"); } catch (e) {}
   startSync();
 })();
