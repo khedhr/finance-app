@@ -9,7 +9,7 @@ SRC="${1:-index.src.html}"
   sed '/^<div class="wrap">/,$d' "$SRC"
   printf '</head>\n<body>\n'
   sed -n '/^<div class="wrap">/,$p' "$SRC"
-  printf '<script>if ("serviceWorker" in navigator && location.protocol === "https:" && !(window.Capacitor && window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform())) navigator.serviceWorker.register("sw.js").catch(function () {});</script>\n'
+  printf '<script>if ("serviceWorker" in navigator && location.protocol === "https:" && !(window.Capacitor && window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform())) navigator.serviceWorker.register("sw.js", { updateViaCache: "none" }).catch(function () {});</script>\n'
   printf '</body>\n</html>\n'
 } > index.html
 cp index.html www/index.html
