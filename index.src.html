@@ -423,6 +423,37 @@ html.embedded .composer { position: relative; bottom: auto; }
 .tab.ask[aria-current="page"] .bubble svg { color: var(--accent) !important; }
 .tab.ask[aria-current="page"]::after { display: block; }
 .tab[aria-current="page"]::after { bottom: -2px; }
+
+/* own style: coin buttons, ring, latest list */
+.hero-main { display: flex; align-items: center; justify-content: space-between; gap: 12px; position: relative; z-index: 1; }
+.hero-txt { display: grid; gap: 6px; min-width: 0; }
+.ring { position: relative; width: 74px; height: 74px; flex: none; }
+.ring svg { width: 100%; height: 100%; transform: rotate(-90deg); }
+.ring circle { fill: none; stroke-width: 7; }
+.ring-bg { stroke: rgba(255,255,255,.16); }
+.ring-fg { stroke: var(--coin); stroke-linecap: round; transition: stroke-dasharray .5s ease; }
+.ring-fg.over { stroke: #ff8a7a; }
+.ring span { position: absolute; inset: 0; display: grid; place-content: center; text-align: center; font-weight: 700; font-size: .95rem; line-height: 1.05; color: #fff; }
+.ring small { font-size: .6rem; font-weight: 500; opacity: .75; }
+.tiles { grid-template-columns: repeat(4, minmax(0, 1fr)) !important; gap: 14px 6px; }
+.tile, .tile.add { background: none !important; border: 0 !important; min-height: 0; padding: 0; justify-items: center; text-align: center; gap: 5px; border-radius: 0; overflow: visible; }
+.tile .ic { width: 58px; height: 58px; border-radius: 50%; position: relative; background: var(--surface2); background: radial-gradient(circle at 35% 30%, color-mix(in srgb, var(--cc) 34%, var(--surface)), color-mix(in srgb, var(--cc) 14%, var(--surface)) 70%); box-shadow: inset 0 0 0 2px color-mix(in srgb, var(--cc) 40%, transparent), 0 4px 10px rgba(0,0,0,.18); }
+.tile .ic::after { content: ""; position: absolute; inset: 4px; border-radius: 50%; border: 1px dashed color-mix(in srgb, var(--cc) 45%, transparent); }
+.tile .ic svg { width: 24px; height: 24px; }
+.tile .nm { font-size: .76rem; font-weight: 600; -webkit-line-clamp: 2; text-align: center; line-height: 1.15; }
+.tile .am { font-size: .72rem; margin-top: -3px; text-align: center; }
+.tile .go { display: none; }
+.tile.add .ic { background: transparent; box-shadow: inset 0 0 0 2px var(--line); }
+.tile.add .ic::after { border-color: var(--line); }
+.tile:active .ic { transform: scale(.92); }
+.latest { list-style: none; margin: 0; padding: 4px 14px; display: grid; background: var(--surface); border: 1px solid var(--line); border-radius: 18px; }
+.latest li + li { border-top: 1px solid var(--line); }
+.latest button { width: 100%; display: grid; grid-template-columns: 36px minmax(0, 1fr) auto; gap: 12px; align-items: center; border: 0; background: none; padding: 10px 0; text-align: left; color: var(--fg); }
+.latest .lic { width: 36px; height: 36px; border-radius: 50%; display: grid; place-items: center; }
+.latest .lic svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 1.9; stroke-linecap: round; stroke-linejoin: round; }
+.latest .lic b { font-family: var(--display); }
+.latest .num { font-family: var(--body); font-weight: 600; font-size: .9rem; }
+.latest .num.in { color: var(--income); }
 </style>
 
 <div class="wrap">
@@ -446,9 +477,13 @@ html.embedded .composer { position: relative; bottom: auto; }
         <span><button class="linkbtn" id="clearSample">Clear examples and start fresh</button></span>
       </div>
       <section class="hero" aria-label="This month">
-        <span class="label" id="heroLabel">Left this month</span>
-        <div class="hero-big num" id="sNet"></div>
-        <div class="hero-bar" aria-hidden="true"><i id="heroBar"></i></div>
+        <div class="hero-main">
+          <div class="hero-txt">
+            <span class="label" id="heroLabel">Left this month</span>
+            <div class="hero-big num" id="sNet"></div>
+          </div>
+          <div class="ring" aria-hidden="true"><svg viewBox="0 0 64 64"><circle cx="32" cy="32" r="27" class="ring-bg"/><circle cx="32" cy="32" r="27" class="ring-fg" id="heroRing"/></svg><span id="heroPct"></span></div>
+        </div>
         <div class="hero-row">
           <span><span class="k">Came in</span><b class="num" id="sIn"></b></span>
           <span><span class="k">Went out</span><b class="num" id="sOut"></b></span>
@@ -464,6 +499,9 @@ html.embedded .composer { position: relative; bottom: auto; }
         </div>
       </div>
       <div class="tiles" id="tiles"></div>
+
+      <div class="section-head"><h2>Latest</h2><a href="#entries" class="small" style="color:var(--accent);font-weight:600;text-decoration:none">See all</a></div>
+      <ul class="latest" id="latest"></ul>
 
       <div class="savecard" id="saveCard">
         <span class="ic" aria-hidden="true"><svg viewBox="0 0 24 24"><ellipse cx="12" cy="6" rx="7" ry="3"/><path d="M5 6v6c0 1.7 3.1 3 7 3s7-1.3 7-3V6M5 12v6c0 1.7 3.1 3 7 3s7-1.3 7-3v-6"/></svg></span>
@@ -951,8 +989,10 @@ html.embedded .composer { position: relative; bottom: auto; }
     const isNow = key === ym(new Date());
     $("heroLabel").textContent = isNow ? "Left this month" : "Left in " + view.toLocaleDateString("en-US", { month: "long" });
     const ratio = incNet > 0 ? spentNet / incNet : (spentNet > 0 ? 1 : 0);
-    $("heroBar").style.width = Math.min(100, Math.max(0, ratio * 100)) + "%";
-    $("heroBar").className = ratio > 1 ? "over" : "";
+    const RC = 2 * Math.PI * 27, rp = Math.min(1, Math.max(0, ratio));
+    $("heroRing").style.strokeDasharray = (rp * RC) + " " + RC;
+    $("heroRing").classList.toggle("over", ratio > 1);
+    $("heroPct").innerHTML = Math.round(ratio * 100) + "%<small>spent</small>";
     const td = todayStr(), todaySpent = sum(state.tx.filter(t => t.date === td && t.type === "expense" && t.cat !== "savings"));
     $("sToday").textContent = money(todaySpent, { round: true });
     renderTiles(m);
@@ -1126,9 +1166,16 @@ html.embedded .composer { position: relative; bottom: auto; }
         <span class="nm">${esc(c.name)}</span>
         <span class="am${totals[i] ? " has" : ""}">${money(totals[i], { round: true })}</span>
         </button>`;
-    }).join("") + `<button type="button" class="tile add" data-cat="__add" aria-label="Add a category"><span class="ic"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg></span><span class="nm">New</span></button>`;
+    }).join("") + `<button type="button" class="tile add" data-cat="__add" aria-label="Add a category"><span class="ic"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg></span><span class="nm">Add new</span></button>`;
     document.querySelectorAll("[data-home]").forEach(b => b.setAttribute("aria-pressed", b.dataset.home === homeType));
+    const recent = [...m].sort((a, b) => b.date.localeCompare(a.date) || 0).slice(0, 4);
+    $("latest").innerHTML = recent.length ? recent.map(t => {
+      const c = catOf(t.cat), col = tileColor(c, t.type);
+      const d = new Date(t.date + "T00:00:00").toLocaleDateString("en-US", { month: "short", day: "numeric" });
+      return `<li><button type="button" data-id="${t.id}"><span class="lic" style="color:var(${col});background:color-mix(in srgb, var(${col}) 18%, transparent)">${icon(c)}</span><span class="what"><b>${esc(t.note || c.name)}</b><span>${esc(c.name)} · ${d}</span></span><span class="num ${t.type === "income" ? "in" : ""}">${t.type === "income" ? "+" : "−"}${money(t.amount)}</span></button></li>`;
+    }).join("") : `<li class="small" style="padding:6px 2px">Nothing yet this month. Tap a coin above to add.</li>`;
   }
+  $("latest").onclick = e => { const b = e.target.closest("button[data-id]"); if (b) startEdit(b.dataset.id); };
   document.querySelectorAll("[data-home]").forEach(b => b.onclick = () => { homeType = b.dataset.home; render(); });
   $("tiles").onclick = e => {
     const b = e.target.closest(".tile"); if (!b) return;
