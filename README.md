@@ -12,7 +12,8 @@ A simple personal finance app that runs in your browser.
 - Savings goals with progress bars
 
 - Filter entries by spending, income or category
-- Opens on a chat screen: type or speak, and a side menu leads to Entries, Debts, Savings goals, Charts and Settings
+- Home screen with a summary card, your accounts (Cash, RT, Qi or your own) and round category buttons; tabs for Entries, Ask (type or speak), Plans (debts and savings goals) and Charts
+- Pick which account paid for each entry, and move money between accounts (like taking cash out of a card)
 - Daily reminder notification (Android)
 - Save a backup file and restore it later
 - Currency: US dollar or Iraqi dinar
