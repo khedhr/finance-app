@@ -454,6 +454,18 @@ html.embedded .composer { position: relative; bottom: auto; }
 .latest .lic b { font-family: var(--display); }
 .latest .num { font-family: var(--body); font-weight: 600; font-size: .9rem; }
 .latest .num.in { color: var(--income); }
+
+/* accounts */
+.accts { display: grid; grid-template-columns: repeat(auto-fit, minmax(100px, 1fr)); gap: 8px; }
+.acct { display: grid; gap: 1px; text-align: left; border: 1px solid var(--line); background: var(--surface); border-radius: 16px; padding: 10px 12px; color: var(--fg); min-width: 0; }
+.acct .an { font-size: .74rem; font-weight: 600; color: var(--muted); letter-spacing: .03em; }
+.acct b { font-size: 1rem; font-weight: 700; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.acct b.neg { color: var(--expense); }
+.acct .as { font-size: .7rem; color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.acct-pick { display: grid; gap: 4px; }
+.acctlist .an-in { flex: 1 1 0; width: 0; min-width: 0; }
+.acctlist .st-in { flex: 0 1 9em; width: 9em; min-width: 0; font-family: var(--mono); }
+#fAcct { min-width: 0; max-width: 100%; }
 </style>
 
 <div class="wrap">
@@ -490,6 +502,8 @@ html.embedded .composer { position: relative; bottom: auto; }
           <span><span class="k">Today</span><b class="num" id="sToday"></b></span>
         </div>
       </section>
+
+      <div class="accts" id="accts" aria-label="Accounts"></div>
 
       <div class="section-head">
         <h2 id="tilesTitle">Tap to add</h2>
@@ -553,6 +567,7 @@ html.embedded .composer { position: relative; bottom: auto; }
             <button type="button" class="i" data-f="income" aria-pressed="false">Income</button>
           </div>
           <select id="fCat" aria-label="Filter by category"><option value="">All categories</option></select>
+          <select id="fAcct" aria-label="Filter by account"><option value="">All accounts</option></select>
         </div>
         <ul class="list" id="list"></ul>
       </section>
@@ -615,6 +630,17 @@ html.embedded .composer { position: relative; bottom: auto; }
     <section class="page" data-page="app-settings" hidden>
       <p class="small sync-line" id="sideFoot" style="margin:0"></p>
       <section class="panel">
+        <div class="panel-head"><h2>Accounts</h2></div>
+        <p class="small" style="margin:0">Where your money is, like cash or your bank cards. Type how much is in each one now, and the app keeps the balance up to date as you add entries.</p>
+        <ul class="catlist acctlist" id="acctList"></ul>
+        <form class="catadd" id="acctAdd">
+          <input id="acctNew" maxlength="20" placeholder="New account, e.g. Zain Cash" aria-label="New account name">
+          <button class="primary" type="submit" style="width:auto">Add</button>
+        </form>
+        <p class="small" id="acctMsg" role="status" style="margin:0"></p>
+      </section>
+
+      <section class="panel">
         <div class="panel-head"><h2>Appearance</h2></div>
         <div class="seg" role="group" aria-label="Theme" id="themeSeg">
           <button type="button" class="a" data-theme-opt="light" aria-pressed="false">Light</button>
@@ -643,6 +669,7 @@ html.embedded .composer { position: relative; bottom: auto; }
         </form>
         <p class="small" id="catMsg" role="status" style="margin:6px 0 0"></p>
       </section>
+
 
       <section class="panel">
         <div class="panel-head"><h2>Currency</h2></div>
@@ -744,6 +771,7 @@ html.embedded .composer { position: relative; bottom: auto; }
       <div class="quickdates" id="quickDates">
         <button type="button" data-qd="0">Today</button><button type="button" data-qd="1">Yesterday</button><button type="button" data-qd="2">2 days ago</button>
       </div>
+      <div class="f acct-pick"><span class="label" id="acctLabel">Paid from</span><div class="quickdates" id="acctPick"></div></div>
       <label class="f f-note"><span class="label">Note</span><input id="note" placeholder="Optional, e.g. Weekly groceries" maxlength="80" autocomplete="off"></label>
       <p class="err" id="err" role="alert"></p>
       <div class="f f-go"><div class="go-row"><button class="primary" type="submit" id="saveBtn">Add</button><button class="ghost" type="button" id="cancelEdit" hidden>Cancel</button></div></div>
@@ -856,6 +884,8 @@ html.embedded .composer { position: relative; bottom: auto; }
   if (!Array.isArray(state.debts)) state.debts = [];
   if (state.currency !== "USD" && state.currency !== "IQD") state.currency = "USD";
   if (!Array.isArray(state.goals)) state.goals = [];
+  const DEFAULT_ACCTS = () => [{ id: "cash", name: "Cash", start: 0 }, { id: "rt", name: "RT", start: 0 }, { id: "qi", name: "Qi", start: 0 }];
+  if (!Array.isArray(state.accounts) || !state.accounts.length) state.accounts = DEFAULT_ACCTS();
   // ---- sync: the same ledger on every device you sign in on ----
   let syncRef = null, syncReady = false, syncWriting = false, syncDirty = false;
   const keepLocal = () => { try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) {} };
@@ -877,6 +907,7 @@ html.embedded .composer { position: relative; bottom: auto; }
     if (!Array.isArray(s.tx)) s.tx = [];
     if (!Array.isArray(s.debts)) s.debts = [];
     if (!Array.isArray(s.goals)) s.goals = [];
+    if (!Array.isArray(s.accounts) || !s.accounts.length) s.accounts = (state.accounts && state.accounts.length) ? state.accounts : DEFAULT_ACCTS();
     if (s.currency !== "USD" && s.currency !== "IQD") s.currency = state.currency || "USD";
     return s;
   }
@@ -942,7 +973,7 @@ html.embedded .composer { position: relative; bottom: auto; }
   let view = new Date(); view.setDate(1);
   let type = "expense";
   let editingId = null;
-  let fType = "all", fCat = "";
+  let fType = "all", fCat = "", fAcct = "";
   const $ = id => document.getElementById(id);
 
   const money = (n, opts = {}) => {
@@ -1011,8 +1042,11 @@ html.embedded .composer { position: relative; bottom: auto; }
     if (fCat && !cats.some(c => c.id === fCat)) fCat = "";
     $("fCat").innerHTML = `<option value="">All categories</option>` + cats.map(c => `<option value="${c.id}">${esc(c.name)}</option>`).join("");
     $("fCat").value = fCat;
-    const filtered = fType !== "all" || fCat;
-    const base = m.filter(t => (fType === "all" || t.type === fType) && (!fCat || t.cat === fCat));
+    if (fAcct && !state.accounts.some(a => a.id === fAcct)) fAcct = "";
+    $("fAcct").innerHTML = `<option value="">All accounts</option>` + state.accounts.map(a => `<option value="${esc(a.id)}">${esc(a.name)}</option>`).join("");
+    $("fAcct").value = fAcct;
+    const filtered = fType !== "all" || fCat || fAcct;
+    const base = m.filter(t => (fType === "all" || t.type === fType) && (!fCat || t.cat === fCat) && (!fAcct || acctOf(t).id === fAcct));
     const sorted = [...base].sort((a, b) => b.date.localeCompare(a.date));
     const cnt = sorted.length + (sorted.length === 1 ? " entry" : " entries");
     $("count").textContent = !sorted.length ? "" : filtered ? cnt + ", " + money(sum(sorted)) : cnt;
@@ -1020,7 +1054,7 @@ html.embedded .composer { position: relative; bottom: auto; }
       const d = new Date(t.date + "T00:00:00").toLocaleDateString("en-US", { month: "short", day: "numeric" });
       const sign = t.type === "income" ? "+" : "−";
       return `<li class="${t.id === editingId ? "editing" : ""}"><span class="dot" style="background:${colorOf(t.cat, t.type)}"></span>
-        <div class="what"><b>${esc(t.note || catOf(t.cat).name)}</b><span>${catOf(t.cat).name} · ${d}</span></div>
+        <div class="what"><b>${esc(t.note || catOf(t.cat).name)}</b><span>${catOf(t.cat).name} · ${d}${acctOf(t).id !== "cash" ? " · " + esc(acctOf(t).name) : ""}</span></div>
         <span class="num ${t.type === "income" ? "in" : "out"}">${sign}${money(t.amount)}</span>
         <button class="edit" data-id="${t.id}" aria-label="Edit entry" title="Edit"><svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><path fill="currentColor" d="M3 17.25V21h3.75L17.8 9.94l-3.75-3.75L3 17.25Zm17.7-10.2a1 1 0 0 0 0-1.41l-2.34-2.34a1 1 0 0 0-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83Z"/></svg></button>
         <button class="del" data-id="${t.id}" aria-label="Delete entry" title="Delete">×</button></li>`;
@@ -1088,7 +1122,8 @@ html.embedded .composer { position: relative; bottom: auto; }
     const amount = parseAmt($("amt").value);
     if (!(amount > 0)) { $("err").textContent = "Enter an amount greater than zero."; $("amt").focus(); return; }
     const date = $("date").value || todayStr();
-    const entry = { type, cat: $("cat").value, amount, note: $("note").value.trim(), date };
+    const entry = { type, cat: $("cat").value, amount, note: $("note").value.trim(), date, acct: pickedAcct };
+    try { localStorage.setItem(ACCT_KEY, pickedAcct); } catch (e2) {}
     const old = editingId && state.tx.find(t => t.id === editingId);
     const snap0 = old ? null : snap();
     if (old) { unlink(old); Object.assign(old, entry); delete old.sample; relink(old); } else state.tx.push({ id: uid(), ...entry });
@@ -1118,6 +1153,7 @@ html.embedded .composer { position: relative; bottom: auto; }
     $("amt").value = t.amount;
     $("date").value = t.date;
     $("note").value = t.note || "";
+    pickedAcct = acctOf(t).id;
     $("formTitle").textContent = "Edit entry";
     $("saveBtn").textContent = "Save changes";
     $("cancelEdit").hidden = false;
@@ -1168,6 +1204,10 @@ html.embedded .composer { position: relative; bottom: auto; }
         </button>`;
     }).join("") + `<button type="button" class="tile add" data-cat="__add" aria-label="Add a category"><span class="ic"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg></span><span class="nm">Add new</span></button>`;
     document.querySelectorAll("[data-home]").forEach(b => b.setAttribute("aria-pressed", b.dataset.home === homeType));
+    $("accts").innerHTML = state.accounts.map(a => {
+      const bal = acctBalance(a.id), out = sum(m.filter(t => t.type === "expense" && acctOf(t).id === a.id));
+      return `<button type="button" class="acct" data-acct="${esc(a.id)}"><span class="an">${esc(a.name)}</span><b class="${bal < 0 ? "neg" : ""}">${money(bal, { round: true })}</b><span class="as">${out ? "Spent " + money(out, { round: true }) : "Nothing spent"}</span></button>`;
+    }).join("");
     const recent = [...m].sort((a, b) => b.date.localeCompare(a.date) || 0).slice(0, 4);
     $("latest").innerHTML = recent.length ? recent.map(t => {
       const c = catOf(t.cat), col = tileColor(c, t.type);
@@ -1175,6 +1215,7 @@ html.embedded .composer { position: relative; bottom: auto; }
       return `<li><button type="button" data-id="${t.id}"><span class="lic" style="color:var(${col});background:color-mix(in srgb, var(${col}) 18%, transparent)">${icon(c)}</span><span class="what"><b>${esc(t.note || c.name)}</b><span>${esc(c.name)} · ${d}</span></span><span class="num ${t.type === "income" ? "in" : ""}">${t.type === "income" ? "+" : "−"}${money(t.amount)}</span></button></li>`;
     }).join("") : `<li class="small" style="padding:6px 2px">Nothing yet this month. Tap a coin above to add.</li>`;
   }
+  $("accts").onclick = e => { const b = e.target.closest("[data-acct]"); if (!b) return; fAcct = b.dataset.acct; location.hash = "#entries"; render(); };
   $("latest").onclick = e => { const b = e.target.closest("button[data-id]"); if (b) startEdit(b.dataset.id); };
   document.querySelectorAll("[data-home]").forEach(b => b.onclick = () => { homeType = b.dataset.home; render(); });
   $("tiles").onclick = e => {
@@ -1205,7 +1246,7 @@ html.embedded .composer { position: relative; bottom: auto; }
   const ymd = d => d.getFullYear() + "-" + pad(d.getMonth() + 1) + "-" + pad(d.getDate());
   function showSheet() {
     $("sheet").hidden = false; $("sheetScrim").hidden = false;
-    sheetIcon(); markDate();
+    sheetIcon(); markDate(); drawAcctPick();
     document.body.style.overflow = "hidden";
     if (!coarse) setTimeout(() => $("amt").focus({ preventScroll: true }), 50);
   }
@@ -1215,6 +1256,8 @@ html.embedded .composer { position: relative; bottom: auto; }
     if (cat && [...$("cat").options].some(o => o.value === cat)) $("cat").value = cat;
     $("amt").value = ""; $("note").value = ""; $("err").textContent = "";
     $("date").value = todayStr();
+    let last = "cash"; try { last = localStorage.getItem(ACCT_KEY) || "cash"; } catch (e) {}
+    pickedAcct = state.accounts.some(a => a.id === last) ? last : state.accounts[0].id;
     $("formTitle").textContent = catOf($("cat").value).name;
     $("sheet").classList.add("adding");
     showSheet();
@@ -1243,6 +1286,40 @@ html.embedded .composer { position: relative; bottom: auto; }
     if (raw.replace(/\D/g, "").length > 13) return;
     $("amt").value = raw ? group(raw) : "";
     $("err").textContent = "";
+  };
+
+  // ---- accounts (cash, bank cards) ----
+  const ACCT_KEY = "pocket-ledger-acct";
+  let pickedAcct = "cash";
+  const acctOf = t => state.accounts.find(a => a.id === (t.acct || "cash")) || state.accounts[0];
+  const acctBalance = id => { const a = state.accounts.find(x => x.id === id) || {}; return (Number(a.start) || 0) + sum(state.tx.filter(t => t.type === "income" && acctOf(t).id === id)) - sum(state.tx.filter(t => t.type === "expense" && acctOf(t).id === id)); };
+  function drawAcctPick() {
+    if (!state.accounts.some(a => a.id === pickedAcct)) pickedAcct = state.accounts[0].id;
+    $("acctLabel").textContent = type === "income" ? "Went into" : "Paid from";
+    $("acctPick").innerHTML = state.accounts.map(a => `<button type="button" data-ac="${esc(a.id)}" aria-pressed="${a.id === pickedAcct}">${esc(a.name)}</button>`).join("");
+  }
+  $("acctPick").onclick = e => { const b = e.target.closest("[data-ac]"); if (b) { pickedAcct = b.dataset.ac; drawAcctPick(); } };
+  $("tExp").addEventListener("click", drawAcctPick); $("tInc").addEventListener("click", drawAcctPick);
+  function drawAccts() {
+    $("acctList").innerHTML = state.accounts.map(a => `<li data-id="${esc(a.id)}"><input class="an-in" value="${esc(a.name)}" maxlength="20" aria-label="Account name"><input class="st-in" inputmode="decimal" value="${(() => { const v = acctBalance(a.id); return v ? Math.round(v * 100) / 100 : ""; })()}" placeholder="Balance now" aria-label="Starting balance for ${esc(a.name)}"><button type="button" class="del" aria-label="Delete ${esc(a.name)}" ${a.id === "cash" ? "disabled" : ""}>×</button></li>`).join("");
+  }
+  $("acctList").addEventListener("change", e => {
+    const li = e.target.closest("li"); if (!li) return; const a = state.accounts.find(x => x.id === li.dataset.id); if (!a) return;
+    if (e.target.classList.contains("an-in")) { const n = e.target.value.trim().slice(0, 20); if (n) a.name = n; else e.target.value = a.name; }
+    if (e.target.classList.contains("st-in")) { const v = e.target.value.trim(), now = v ? (parseAmt(v) || 0) : 0; a.start = Math.round((now - (acctBalance(a.id) - (Number(a.start) || 0))) * 100) / 100; }
+    save(); render(); $("acctMsg").textContent = "Saved.";
+  });
+  $("acctList").onclick = e => {
+    const b = e.target.closest(".del"); if (!b || b.disabled) return;
+    const id = b.closest("li").dataset.id, a = state.accounts.find(x => x.id === id), before = snap();
+    state.tx.forEach(t => { if (t.acct === id) t.acct = "cash"; });
+    state.accounts = state.accounts.filter(x => x.id !== id); save(); render(); drawAccts();
+    toast("Deleted " + a.name + ". Its entries moved to Cash.", restore(before, drawAccts));
+  };
+  $("acctAdd").onsubmit = e => {
+    e.preventDefault(); const n = $("acctNew").value.trim().slice(0, 20); if (!n) return;
+    if (state.accounts.some(a => a.name.toLowerCase() === n.toLowerCase())) { $("acctMsg").textContent = "You already have " + n + "."; return; }
+    state.accounts.push({ id: "ac-" + uid(), name: n, start: 0 }); $("acctNew").value = ""; save(); render(); drawAccts(); $("acctMsg").textContent = "Added " + n + ".";
   };
 
   // ---- categories editor ----
@@ -1312,7 +1389,7 @@ html.embedded .composer { position: relative; bottom: auto; }
     clearTimeout(toastTimer); toastTimer = setTimeout(() => { $("toast").hidden = true; undoFn = null; }, 6000);
   }
   $("toastUndo").onclick = () => { const f = undoFn; undoFn = null; $("toast").hidden = true; if (f) f(); };
-  const snap = () => JSON.parse(JSON.stringify({ tx: state.tx, debts: state.debts, goals: state.goals, customCats: state.customCats || [] }));
+  const snap = () => JSON.parse(JSON.stringify({ tx: state.tx, debts: state.debts, goals: state.goals, customCats: state.customCats || [], accounts: state.accounts }));
   const restore = (b, after) => () => { Object.assign(state, b); if (typeof buildCats === "function") buildCats(); save(); fillCats(); render(); if (after) after(); };
 
   // ---- dollar rate ----
@@ -1401,10 +1478,10 @@ html.embedded .composer { position: relative; bottom: auto; }
     const out = (t, k) => { $("exportMsg").textContent = t; $("exportMsg").className = "small " + (k || ""); };
     if (!rows.length) return out("No entries this month to export.", "bad");
     const q = v => { v = String(v); return /[",\n\r]/.test(v) ? '"' + v.replace(/"/g, '""') + '"' : v; };
-    const cur = state.currency, lines = [["Date", "Type", "Category", "Note", "Amount (" + cur + ")"].join(",")];
-    for (const t of rows) lines.push([t.date, t.type === "income" ? "Income" : "Spending", catOf(t.cat).name, t.note || "", (t.type === "income" ? 1 : -1) * t.amount].map(q).join(","));
+    const cur = state.currency, lines = [["Date", "Type", "Category", "Account", "Note", "Amount (" + cur + ")"].join(",")];
+    for (const t of rows) lines.push([t.date, t.type === "income" ? "Income" : "Spending", catOf(t.cat).name, acctOf(t).name, t.note || "", (t.type === "income" ? 1 : -1) * t.amount].map(q).join(","));
     const inc = sum(rows.filter(t => t.type === "income")), exp = sum(rows.filter(t => t.type === "expense"));
-    lines.push("", ["", "", "", "Total income", inc].join(","), ["", "", "", "Total spent", -exp].join(","), ["", "", "", "Left over", Math.round((inc - exp) * 100) / 100].join(","));
+    lines.push("", ["", "", "", "", "Total income", inc].join(","), ["", "", "", "", "Total spent", -exp].join(","), ["", "", "", "", "Left over", Math.round((inc - exp) * 100) / 100].join(","));
     const filename = "pocket-ledger-" + key + ".csv";
     try {
       const r = await saveOut(filename, "\ufeff" + lines.join("\r\n"), "text/csv", "Pocket Ledger " + key);
@@ -1422,7 +1499,7 @@ html.embedded .composer { position: relative; bottom: auto; }
       const d = JSON.parse(await f.text());
       if (!d || !Array.isArray(d.tx)) throw new Error("bad");
       const tx = d.tx.filter(t => t && t.id && (t.type === "income" || t.type === "expense") && typeof t.amount === "number" && /^\d{4}-\d{2}-\d{2}$/.test(t.date));
-      pending = { tx, goals: Array.isArray(d.goals) ? d.goals.filter(g => g && g.id && g.name && typeof g.target === "number") : [], debts: Array.isArray(d.debts) ? d.debts.filter(x => x && x.id && x.who && typeof x.amount === "number") : [], currency: d.currency === "IQD" || d.currency === "USD" ? d.currency : state.currency, catEdits: d.catEdits && typeof d.catEdits === "object" ? d.catEdits : {}, customCats: Array.isArray(d.customCats) ? d.customCats.filter(c => c && c.id && c.name) : [], budget: Number(d.budget) || 0, catBudgets: d.catBudgets && typeof d.catBudgets === "object" ? d.catBudgets : {} };
+      pending = { tx, goals: Array.isArray(d.goals) ? d.goals.filter(g => g && g.id && g.name && typeof g.target === "number") : [], debts: Array.isArray(d.debts) ? d.debts.filter(x => x && x.id && x.who && typeof x.amount === "number") : [], currency: d.currency === "IQD" || d.currency === "USD" ? d.currency : state.currency, catEdits: d.catEdits && typeof d.catEdits === "object" ? d.catEdits : {}, accounts: Array.isArray(d.accounts) && d.accounts.length ? d.accounts.filter(a => a && a.id && a.name) : DEFAULT_ACCTS(), customCats: Array.isArray(d.customCats) ? d.customCats.filter(c => c && c.id && c.name) : [], budget: Number(d.budget) || 0, catBudgets: d.catBudgets && typeof d.catBudgets === "object" ? d.catBudgets : {} };
       const when = d.savedAt ? " from " + new Date(d.savedAt).toLocaleDateString() : "";
       $("restoreText").textContent = "This backup" + when + " has " + tx.length + " entries. It will replace everything in the app now.";
       $("restoreConfirm").hidden = false; dataMsg("");
@@ -1552,7 +1629,9 @@ html.embedded .composer { position: relative; bottom: auto; }
       .replace(/\b(i |I )?(spent|spend|paid for|paid|bought|got paid|got|earned|received|cost|on|for|of|yesterday|today|dollars?|euros?|pounds?|dinars?|dirhams?|riyals?|bucks|usd|eur|gbp|tnd|mad|aed|sar|cad|iqd)\b/gi, " ")
       .replace(/[$€£]/g, "").replace(/\s+/g, " ").trim();
     note = note ? note[0].toUpperCase() + note.slice(1) : catOf(cat).name;
-    return { type: t, cat, amount, date, note };
+    const ac = state.accounts.find(a => a.id !== "cash" && new RegExp("\\b" + a.name.toLowerCase().replace(/[.*+?^${}()|[\]\\]/g, "\\$&") + "\\b").test(s));
+    if (ac) note = note.replace(new RegExp("\\b(from |with |on |by )?(my )?" + ac.name.replace(/[.*+?^${}()|[\]\\]/g, "\\$&") + "( card| account)?\\b", "i"), " ").replace(/\s+/g, " ").trim() || catOf(cat).name;
+    return { type: t, cat, amount, date, note, acct: ac ? ac.id : "cash" };
   }
   function localQuickAdd(text) {
     const msg = $("quickMsg");
@@ -1593,13 +1672,14 @@ html.embedded .composer { position: relative; bottom: auto; }
 Expense categories (id: name): ${EXP_CATS.map(c => c.id + ": " + c.name).join(", ")}.
 Income categories (id: name): ${INC_CATS.map(c => c.id + ": " + c.name).join(", ")}.
 Open debts: ${JSON.stringify(state.debts.filter(d => d.paid < d.amount).map(d => ({ who: d.who, dir: d.dir, left: d.amount - d.paid })))}.
+Accounts (id: name): ${state.accounts.map(a => a.id + ": " + a.name).join(", ")}. If the person names an account (e.g. "from RT", "on my Qi card"), set "acct" to its id; otherwise leave it out.
 Savings goals: ${JSON.stringify(state.goals.map(g => ({ name: g.name, saved: g.saved, target: g.target })))}.
 
 The person said (any language, may be speech-to-text with mistakes): """${text}"""
 
 Reply with ONLY a JSON object: {"actions": [...], "reply": "one short sentence in the person's language saying what you recorded, or asking what they meant"}.
 Action shapes:
-- {"do":"add_entry","type":"expense"|"income","cat":"<category id>","amount":number,"date":"YYYY-MM-DD","note":"short label, e.g. Taxi"}
+- {"do":"add_entry","type":"expense"|"income","cat":"<category id>","amount":number,"date":"YYYY-MM-DD","note":"short label, e.g. Taxi","acct":"<account id, optional>"}
 - {"do":"add_debt","dir":"owe"|"owed","who":"name","amount":number}   (owe = the person owes someone; owed = someone owes the person)
 - {"do":"pay_debt","who":"name from open debts","amount":number|null}   (null = paid in full; repayments of existing debts go here, not add_entry)
 - {"do":"add_goal","name":"goal name","target":number}
@@ -1653,7 +1733,8 @@ Rules: amounts are plain numbers ("25k" = 25000, "2 million" = 2000000). Resolve
         const cats = a.type === "income" ? INC_CATS : EXP_CATS;
         const cat = cats.some(c => c.id === a.cat) ? a.cat : (a.type === "income" ? "other-in" : "other");
         const date = /^\d{4}-\d{2}-\d{2}$/.test(a.date || "") && a.date <= todayStr() ? a.date : todayStr();
-        state.tx.push({ id: uid(), type: a.type, cat, amount, note: String(a.note || catOf(cat).name).slice(0, 80), date });
+        const acct = state.accounts.some(x => x.id === a.acct) ? a.acct : "cash";
+        state.tx.push({ id: uid(), type: a.type, cat, amount, note: String(a.note || catOf(cat).name).slice(0, 80), date, acct });
         lastDate = date; done.push(1);
       } else if (a.do === "add_debt" && amount > 0 && a.who && (a.dir === "owe" || a.dir === "owed")) {
         state.debts.push({ id: uid(), dir: a.dir, who: String(a.who).slice(0, 40), amount, paid: 0, date: todayStr() }); done.push(1);
@@ -1742,7 +1823,7 @@ Rules: amounts are plain numbers ("25k" = 25000, "2 million" = 2000000). Resolve
     closeSheet(true);
     document.documentElement.setAttribute("data-view", page);
     if (page === "chat") drawChat();
-    if (page === "app-settings") fetchRate(false);
+    if (page === "app-settings") { fetchRate(false); drawAccts(); }
     page === "chat" ? toBottom(false) : window.scrollTo(0, 0);
   }
   window.addEventListener("hashchange", () => go(location.hash.slice(1)));
@@ -1823,6 +1904,7 @@ Rules: amounts are plain numbers ("25k" = 25000, "2 million" = 2000000). Resolve
     render();
   });
   $("fCat").onchange = e => { fCat = e.target.value; render(); };
+  $("fAcct").onchange = e => { fAcct = e.target.value; render(); };
 
   // ---- savings goals ----
   // ---- withdraw from savings ----
